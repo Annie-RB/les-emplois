@@ -8,3 +8,28 @@ custom_blocks="buttons,endbuttons"
 max_attribute_length=200
 preserve_blank_lines=true
 extend_exclude = "itou/templates/utils/widgets/duet_date_picker_widget.html"
+
+[tool.pylint.main]
+load-plugins = "pylint_django"
+init-hook = "import os, sys; sys.path.insert(0, os.path.abspath('.'))"
+django-settings-module = "config.settings.dev"
+
+[tool.pylint."messages control"]
+disable = [
+  "arguments-differ",
+  "duplicate-code",
+  "fixme",
+  "invalid-name",
+  "missing-docstring",
+  "no-member",
+  "too-few-public-methods",
+  "too-many-ancestors",
+  "too-many-instance-attributes",
+  "too-many-lines",
+  "too-many-locals",
+  "too-many-public-methods",
+  "too-many-statements",
+  "unused-argument",
+]
+[tool.pylint.format]
+max-line-length=119
