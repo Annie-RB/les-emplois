@@ -1,4 +1,4 @@
-import requests
+import httpx
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.providers.oauth2.views import OAuth2Adapter
 from django.conf import settings
@@ -32,7 +32,7 @@ class PEAMUOAuth2Adapter(OAuth2Adapter):
     def complete_login(self, request, app, token, **kwargs):
         id_token = token.token
         headers = {"Authorization": f"Bearer {id_token}"}
-        response = requests.get(self.profile_url, params=None, headers=headers, timeout=settings.REQUESTS_TIMEOUT)
+        response = httpx.get(self.profile_url, params=None, headers=headers)
         response.raise_for_status()
         extra_data = response.json()
         extra_data["id_token"] = id_token

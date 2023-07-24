@@ -35,7 +35,7 @@ def _call_api(api_path, token):
     For further processing, returning something else than `None` is considered a success
     """
     url = f"{settings.API_ESD['BASE_URL']}/{api_path}"
-    response = httpx.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=settings.REQUESTS_TIMEOUT)
+    response = httpx.get(url, headers={"Authorization": f"Bearer {token}"})
     if response.status_code == 200:
         result = response.json()
         # logger.debug(f"CALL {url}: {result}")

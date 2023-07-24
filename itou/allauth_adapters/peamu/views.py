@@ -10,7 +10,7 @@ from allauth.utils import get_request_param
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from requests import RequestException
+from httpx import RequestError
 
 from itou.allauth_adapters.peamu.adapter import PEAMUOAuth2Adapter
 
@@ -54,7 +54,7 @@ class PEAMUOAuth2CallbackView(OAuth2CallbackView):
             else:
                 login.state = SocialLogin.unstash_state(request)
             return complete_social_login(request, login)
-        except (PermissionDenied, OAuth2Error, RequestException, ProviderException) as e:
+        except (PermissionDenied, OAuth2Error, RequestError, ProviderException) as e:
             logger.error("Unknown error in PEAMU dispatch with exception '%s'.", e)
             return render_authentication_error(request, self.adapter.provider_id, exception=e)
 
