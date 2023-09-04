@@ -471,7 +471,7 @@ class ApplyAsJobSeekerTest(S3AccessingTestCase):
             data={
                 "selected_jobs": [siae.job_description_through.first().pk],
                 "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                "resume_link": "https://server.com/rocky-balboa.pdf",
+                "resume_link": "http://localhost/rocky-balboa.pdf",
             },
         )
         assert response.status_code == 302
@@ -484,7 +484,7 @@ class ApplyAsJobSeekerTest(S3AccessingTestCase):
         assert job_application.state == job_application.state.workflow.STATE_NEW
         assert job_application.message == "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
         assert list(job_application.selected_jobs.all()) == [siae.job_description_through.first()]
-        assert job_application.resume_link == "https://server.com/rocky-balboa.pdf"
+        assert job_application.resume_link == "http://localhost/rocky-balboa.pdf"
 
         assert f"job_application-{siae.pk}" not in self.client.session
 
@@ -778,7 +778,7 @@ class ApplyAsAuthorizedPrescriberTest(S3AccessingTestCase):
             data={
                 "selected_jobs": [siae.job_description_through.first().pk, siae.job_description_through.last().pk],
                 "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                "resume_link": "https://server.com/rocky-balboa.pdf",
+                "resume_link": "http://localhost/rocky-balboa.pdf",
             },
         )
         assert response.status_code == 302
@@ -794,7 +794,7 @@ class ApplyAsAuthorizedPrescriberTest(S3AccessingTestCase):
             siae.job_description_through.first(),
             siae.job_description_through.last(),
         ]
-        assert job_application.resume_link == "https://server.com/rocky-balboa.pdf"
+        assert job_application.resume_link == "http://localhost/rocky-balboa.pdf"
 
         assert f"job_application-{siae.pk}" not in self.client.session
 
@@ -1026,7 +1026,7 @@ class ApplyAsAuthorizedPrescriberTest(S3AccessingTestCase):
             data={
                 "selected_jobs": [siae.job_description_through.first().pk, siae.job_description_through.last().pk],
                 "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                "resume_link": "https://server.com/rocky-balboa.pdf",
+                "resume_link": "http://localhost/rocky-balboa.pdf",
             },
         )
         assert response.status_code == 302
@@ -1042,7 +1042,7 @@ class ApplyAsAuthorizedPrescriberTest(S3AccessingTestCase):
             siae.job_description_through.first(),
             siae.job_description_through.last(),
         ]
-        assert job_application.resume_link == "https://server.com/rocky-balboa.pdf"
+        assert job_application.resume_link == "http://localhost/rocky-balboa.pdf"
 
         assert f"job_application-{siae.pk}" not in self.client.session
 
@@ -1305,7 +1305,7 @@ class ApplyAsPrescriberTest(S3AccessingTestCase):
             data={
                 "selected_jobs": [siae.job_description_through.first().pk, siae.job_description_through.last().pk],
                 "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                "resume_link": "https://server.com/rocky-balboa.pdf",
+                "resume_link": "http://localhost/rocky-balboa.pdf",
             },
         )
         assert response.status_code == 302
@@ -1321,7 +1321,7 @@ class ApplyAsPrescriberTest(S3AccessingTestCase):
             siae.job_description_through.first(),
             siae.job_description_through.last(),
         ]
-        assert job_application.resume_link == "https://server.com/rocky-balboa.pdf"
+        assert job_application.resume_link == "http://localhost/rocky-balboa.pdf"
 
         assert f"job_application-{siae.pk}" not in self.client.session
 
@@ -1733,7 +1733,7 @@ class ApplyAsSiaeTest(S3AccessingTestCase):
             data={
                 "selected_jobs": [siae.job_description_through.first().pk, siae.job_description_through.last().pk],
                 "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                "resume_link": "https://server.com/rocky-balboa.pdf",
+                "resume_link": "http://localhost/rocky-balboa.pdf",
             },
         )
         assert response.status_code == 302
@@ -1749,7 +1749,7 @@ class ApplyAsSiaeTest(S3AccessingTestCase):
             siae.job_description_through.first(),
             siae.job_description_through.last(),
         ]
-        assert job_application.resume_link == "https://server.com/rocky-balboa.pdf"
+        assert job_application.resume_link == "http://localhost/rocky-balboa.pdf"
 
         assert f"job_application-{siae.pk}" not in self.client.session
 
