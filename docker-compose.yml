@@ -37,7 +37,19 @@ services:
     ports:
       - "${POSTGRES_PORT_ON_DOCKER_HOST:-5432}:5432"
 
+  minio:
+    image: quay.io/minio/minio
+    container_name: itou_minio
+    restart: always
+    command: "server /data --console-address :9001"
+    volumes:
+      - itou_minio:/data
+    ports:
+      - "[::1]:9000:9000"
+      - "[::1]:9001:9001"
+
   django:
+    profiles: ["django"]
     container_name: itou_django
     environment:
       - PGHOST=postgres
@@ -71,3 +83,4 @@ services:
 volumes:
   postgres_data:
   postgres_data_backups:
+  itou_minio:

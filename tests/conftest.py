@@ -12,6 +12,8 @@ from django.db import connection
 from django.test import override_settings
 from factory import Faker
 
+from config import minio
+
 
 # Rewrite before importing itou code.
 pytest.register_assert_rewrite("tests.utils.test", "tests.utils.htmx.test")
@@ -73,6 +75,7 @@ def preload_spatial_reference(django_db_setup, django_db_blocker):
 
 @pytest.fixture(autouse=True, scope="session")
 def test_settings():
+    minio.setup()
     with override_settings(S3_STORAGE_ENDPOINT_DOMAIN="localhost", S3_STORAGE_BUCKET_NAME="test"):
         yield
 

@@ -45,6 +45,9 @@ endif
 
 venv: $(VIRTUAL_ENV)
 
+buckets: $(VENV_REQUIREMENT)
+	$(EXEC_CMD) python -c "from config import minio; minio.setup()"
+
 PIP_COMPILE_FLAGS := --allow-unsafe --generate-hashes $(PIP_COMPILE_OPTIONS)
 compile-deps: $(VENV_REQUIREMENT)
 	$(EXEC_CMD) pip-compile $(PIP_COMPILE_FLAGS) -o requirements/base.txt requirements/base.in

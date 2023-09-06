@@ -35,6 +35,9 @@ drf-spectacular  # https://github.com/tfranzel/drf-spectacular
 # Django filter (filtering/ordering of API results)
 django-filter  # https://django-filter.readthedocs.io/en/stable/
 
+# Django storages (storing files on S3-like services)
+django-storages  # https://github.com/jschneier/django-storages
+
 # Front-end
 # ------------------------------------------------------------------------------
 

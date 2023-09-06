@@ -353,6 +353,7 @@ django==4.2.5 \
     #   django-htmx
     #   django-import-export
     #   django-select2
+    #   django-storages
     #   django-xworkflows
     #   djangorestframework
     #   drf-spectacular
@@ -404,6 +405,10 @@ django-import-export==3.2.0 \
 django-select2==8.1.2 \
     --hash=sha256:dc09e09299988dd7cc1f31c27582976377f0e1479101be1f3bb0d1f24216477f \
     --hash=sha256:f44685ee1c39090aade01e3ebc256702f05620f3c78a3c268440ad9a66070876
+    # via -r requirements/test.txt
+django-storages==1.13.2 \
+    --hash=sha256:31dc5a992520be571908c4c40d55d292660ece3a55b8141462b4e719aa38eab3 \
+    --hash=sha256:cbadd15c909ceb7247d4ffc503f12a9bec36999df8d0bef7c31e57177d512688
     # via -r requirements/test.txt
 django-xworkflows==1.0.0 \
     --hash=sha256:b233b5244fb864f95ba935bd3f2214c55600db6294dbca544a6f9eb14918fb06 \

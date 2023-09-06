@@ -12,3 +12,14 @@ from tests.utils.test import TestCase
 )
 class S3AccessingTestCase(TestCase):
     pass
+    # @classmethod
+    # def setUpClass(cls):
+    #     super().setUpClass()
+    #     namespace = uuid.uuid4()
+    #     original_location = default_storage.location
+    #     default_storage.location = f"{original_location}/{namespace}"
+
+    #     def cleanup():
+    #         default_storage.location = original_location
+
+    #     cls.addClassCleanup(cleanup)
