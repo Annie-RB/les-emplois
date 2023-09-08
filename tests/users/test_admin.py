@@ -54,6 +54,7 @@ def test_get_fields_to_transfer_for_job_seekers():
         "created_siae_set",  # Siae.created_by
         "eligibilitydiagnosis",  # EligibilityDiagnosis.author
         "emailaddress",  # allauth.account.models.EmailAddress.user
+        "employmentcontract",  # EmploymentContract.employee
         "externaldataimport",  # ExternalDataImport.user: this seems largely unused
         "geiqadministrativecriteria",  # GEIQAdministrativeCriteria.created_by
         "geiqeligibilitydiagnosis",  # GEIQEligibilityDiagnosis.author

@@ -79,6 +79,7 @@ LOCAL_APPS = [
     "itou.external_data",
     "itou.metabase",
     "itou.asp",
+    "itou.employment",
     "itou.employee_record",
     "itou.siae_evaluations",
     "itou.geo",
