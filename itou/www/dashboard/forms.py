@@ -53,7 +53,6 @@ class EditJobSeekerInfoForm(JobSeekerNIRUpdateMixin, MandatoryAddressFormMixin, 
             "address_line_2",
             "post_code",
             "city",
-            "city_slug",
             "pole_emploi_id",
             "lack_of_pole_emploi_id_reason",
         ]
@@ -117,7 +116,6 @@ class EditUserInfoForm(OptionalAddressFormMixin, SSOReadonlyMixin, forms.ModelFo
             "address_line_2",
             "post_code",
             "city",
-            "city_slug",
         ]
 
     def __init__(self, *args, **kwargs):

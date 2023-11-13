@@ -112,8 +112,7 @@ class UtilsOptionalAddressFormMixinTest(TestCase):
         form = OptionalAddressFormMixin(data=form_data)
         assert form.is_valid()
         expected_cleaned_data = {
-            "city_slug": "",
-            "city": "",
+            "city": None,
             "address_line_1": "",
             "address_line_2": "",
             "post_code": "",
@@ -125,7 +124,6 @@ class UtilsOptionalAddressFormMixinTest(TestCase):
         `address_line_1` is missing but `address_line_2` exists.
         """
         form_data = {
-            "city_slug": "",
             "city": "",
             "address_line_1": "",
             "address_line_2": "11 rue des pixels cassés",
@@ -145,8 +143,7 @@ class UtilsOptionalAddressFormMixinTest(TestCase):
         [city] = create_test_cities(["67"], num_per_department=1)
 
         form_data = {
-            "city_slug": city.slug,
-            "city": "",
+            "city": city.pk,
             "address_line_1": "11 rue des pixels cassés",
             "address_line_2": "",
             "post_code": "67000",
@@ -157,8 +154,7 @@ class UtilsOptionalAddressFormMixinTest(TestCase):
         with self.assertNumQueries(1):
             assert form.is_valid()
             expected_cleaned_data = {
-                "city_slug": city.slug,
-                "city": city.name,
+                "city": city,
                 "address_line_1": form_data["address_line_1"],
                 "address_line_2": form_data["address_line_2"],
                 "post_code": form_data["post_code"],
@@ -167,7 +163,7 @@ class UtilsOptionalAddressFormMixinTest(TestCase):
 
     def test_with_instance(self):
         """
-        If an instance is passed, `city` and `city_slug` should be prepopulated.
+        If an instance is passed, `city` should be prepopulated.
         """
 
         [city] = create_test_cities(["57"], num_per_department=1)
@@ -176,13 +172,12 @@ class UtilsOptionalAddressFormMixinTest(TestCase):
         user.address_line_1 = "11 rue des pixels cassés"
         user.department = city.department
         user.post_code = city.post_codes[0]
-        user.city = city.name
+        user.city = city
 
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(0):
             form = DummyUserModelForm(data={}, instance=user)
 
-            assert form.initial["city_slug"] == city.slug
-            assert form.initial["city"] == city.name
+            assert form.initial["city"] == city
 
 
 class UtilsMandatoryAddressFormMixinTest(TestCase):

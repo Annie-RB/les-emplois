@@ -1,8 +1,10 @@
 import django.forms as forms
 from django.urls import reverse_lazy
+from django.utils.text import format_lazy
 
 from itou.cities.models import City
 from itou.users.models import User
+from itou.utils.widgets import RemoteAutocompleteSelect2Widget
 
 
 class OptionalAddressFormMixin(forms.Form):
@@ -10,25 +12,18 @@ class OptionalAddressFormMixin(forms.Form):
     Form mixin that allows to enter an optional address.
     """
 
-    ALL_CITY_AUTOCOMPLETE_SOURCE_URL = reverse_lazy("autocomplete:cities")
-
-    # The hidden `city_slug` field is populated by the autocomplete JavaScript
-    # mechanism, see `city_autocomplete_field.js`.
-    city_slug = forms.CharField(
-        required=False, widget=forms.HiddenInput(attrs={"class": "js-city-autocomplete-hidden"})
-    )
-
-    city = forms.CharField(
+    city = forms.ModelChoiceField(
+        queryset=City.objects,
         label="Ville",
         required=False,
-        widget=forms.TextInput(
+        widget=RemoteAutocompleteSelect2Widget(
             attrs={
-                "class": "js-city-autocomplete-input form-control",
-                "data-autocomplete-source-url": ALL_CITY_AUTOCOMPLETE_SOURCE_URL,
-                "data-autosubmit-on-enter-pressed": 0,
-                "placeholder": "Nom de la ville",
-                "autocomplete": "off",
-            }
+                "data-ajax--url": format_lazy("{}?select2=", reverse_lazy("autocomplete:cities")),
+                "data-ajax--cache": "true",
+                "data-ajax--type": "GET",
+                "data-minimum-input-length": 2,
+                "data-placeholder": "Nome de la ville",
+            },
         ),
     )
 
@@ -50,28 +45,8 @@ class OptionalAddressFormMixin(forms.Form):
         label="Code postal",
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Needed for proper auto-completion when `OptionalAddressFormMixin` is used with
-        # a ModelForm which has an instance existing in DB.
-        if hasattr(self, "instance") and hasattr(self.instance, "city") and hasattr(self.instance, "department"):
-            self.initial["city"] = self.instance.city
-            # Populate the hidden `city` field.
-            city = City.objects.filter(name=self.instance.city, department=self.instance.department).first()
-            if city:
-                self.initial["city_slug"] = city.slug
-
     def clean(self):
         cleaned_data = super().clean()
-
-        city_slug = cleaned_data["city_slug"]
-
-        if city_slug:
-            try:
-                # Override the `city` field with the real city name.
-                cleaned_data["city"] = City.objects.get(slug=city_slug).name
-            except City.DoesNotExist:
-                raise forms.ValidationError({"city": "Cette ville n'existe pas."})
 
         # Basic check of address fields.
         addr1, addr2, post_code, city = (
@@ -88,7 +63,7 @@ class OptionalAddressFormMixin(forms.Form):
                 self.add_error("address_line_1", "Adresse : ce champ est obligatoire.")
             if not post_code:
                 self.add_error("post_code", "Code postal : ce champ est obligatoire.")
-            if not city_slug:
+            if not city:
                 self.add_error("city", "Ville : ce champ est obligatoire.")
 
 

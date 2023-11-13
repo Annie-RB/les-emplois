@@ -1396,7 +1396,6 @@ class UpdateJobSeekerStepEndView(UpdateJobSeekerBaseView):
         if self.request.user.can_edit_personal_information(self.job_seeker):
             allowed_user_fields_to_update.extend(CreateOrUpdateJobSeekerStep1Form.Meta.fields)
             allowed_user_fields_to_update.extend(CreateOrUpdateJobSeekerStep2Form.Meta.fields)
-            allowed_user_fields_to_update.remove("city_slug")
 
         for field in allowed_user_fields_to_update:
             if field in self.job_seeker_session.get("user", {}):
