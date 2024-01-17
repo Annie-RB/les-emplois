@@ -14,8 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
 from freezegun import freeze_time
-from pytest_django.asserts import (assertContains, assertNotContains,
-                                   assertRedirects)
+from pytest_django.asserts import assertContains, assertNotContains, assertRedirects
 from rest_framework.authtoken.models import Token
 
 from itou.cities.models import City
@@ -24,45 +23,49 @@ from itou.employee_record.enums import Status
 from itou.institutions.enums import InstitutionKind
 from itou.job_applications.notifications import (
     NewQualifiedJobAppEmployersNotification,
-    NewSpontaneousJobAppEmployersNotification)
+    NewSpontaneousJobAppEmployersNotification,
+)
 from itou.prescribers.enums import PrescriberOrganizationKind
 from itou.prescribers.models import PrescriberOrganization
 from itou.siae_evaluations import enums as evaluation_enums
 from itou.siae_evaluations.constants import CAMPAIGN_VIEWABLE_DURATION
 from itou.siae_evaluations.models import Sanctions
-from itou.users.enums import (IdentityProvider, LackOfNIRReason,
-                              LackOfPoleEmploiId, Title, UserKind)
+from itou.users.enums import IdentityProvider, LackOfNIRReason, LackOfPoleEmploiId, Title, UserKind
 from itou.users.models import User
 from itou.utils import constants as global_constants
 from itou.utils.models import InclusiveDateRange
-from itou.utils.templatetags.format_filters import (format_approval_number,
-                                                    format_siret)
+from itou.utils.templatetags.format_filters import format_approval_number, format_siret
 from itou.www.dashboard.forms import EditUserEmailForm
-from tests.approvals.factories import (ApprovalFactory,
-                                       ProlongationRequestFactory)
-from tests.companies.factories import (CompanyAfterGracePeriodFactory,
-                                       CompanyFactory,
-                                       CompanyMembershipFactory,
-                                       CompanyPendingGracePeriodFactory,
-                                       CompanyWithMembershipAndJobsFactory)
+from tests.approvals.factories import ApprovalFactory, ProlongationRequestFactory
+from tests.companies.factories import (
+    CompanyAfterGracePeriodFactory,
+    CompanyFactory,
+    CompanyMembershipFactory,
+    CompanyPendingGracePeriodFactory,
+    CompanyWithMembershipAndJobsFactory,
+)
 from tests.employee_record.factories import EmployeeRecordFactory
-from tests.institutions.factories import (InstitutionFactory,
-                                          InstitutionMembershipFactory,
-                                          LaborInspectorFactory)
-from tests.job_applications.factories import (
-    JobApplicationFactory, JobApplicationSentByPrescriberFactory)
+from tests.institutions.factories import InstitutionFactory, InstitutionMembershipFactory, LaborInspectorFactory
+from tests.job_applications.factories import JobApplicationFactory, JobApplicationSentByPrescriberFactory
 from tests.openid_connect.inclusion_connect.test import (
-    InclusionConnectBaseTestCase, override_inclusion_connect_settings)
-from tests.openid_connect.inclusion_connect.tests import (OIDC_USERINFO,
-                                                          mock_oauth_dance)
+    InclusionConnectBaseTestCase,
+    override_inclusion_connect_settings,
+)
+from tests.openid_connect.inclusion_connect.tests import OIDC_USERINFO, mock_oauth_dance
 from tests.prescribers import factories as prescribers_factories
 from tests.siae_evaluations.factories import (
-    EvaluatedAdministrativeCriteriaFactory, EvaluatedJobApplicationFactory,
-    EvaluatedSiaeFactory, EvaluationCampaignFactory)
-from tests.users.factories import (DEFAULT_PASSWORD, EmployerFactory,
-                                   JobSeekerFactory,
-                                   JobSeekerWithAddressFactory,
-                                   PrescriberFactory)
+    EvaluatedAdministrativeCriteriaFactory,
+    EvaluatedJobApplicationFactory,
+    EvaluatedSiaeFactory,
+    EvaluationCampaignFactory,
+)
+from tests.users.factories import (
+    DEFAULT_PASSWORD,
+    EmployerFactory,
+    JobSeekerFactory,
+    JobSeekerWithAddressFactory,
+    PrescriberFactory,
+)
 from tests.utils.test import BASE_NUM_QUERIES, TestCase, parse_response_to_soup
 
 
@@ -884,6 +887,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         assert response.status_code == 200
         assert response.context["form"].errors.get("title") == ["Ce champ est obligatoire."]
 
+    @override_settings(API_BAN_BASE_URL="https://api-adresse.data.gouv.fr")
     @pytest.mark.usefixtures("unittest_compatibility")
     def test_update_address(self):
         user = JobSeekerFactory()
@@ -892,12 +896,13 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         response = self.client.get(url)
         # Address is mandatory.
         post_data = {
+            "title": "M",
             "email": "bob@saintclar.net",
             "first_name": "Bob",
             "last_name": "Saint Clar",
             "birthdate": "20/12/1978",
             "phone": "0610203050",
-            "lack_of_pole_emploi_id_reason": user.REASON_NOT_REGISTERED,
+            "lack_of_pole_emploi_id_reason": LackOfPoleEmploiId.REASON_NOT_REGISTERED,
         }
         response = self.client.post(url, data=post_data)
         assert response.status_code == 200
@@ -906,6 +911,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         # Now try again providing every required field.
         post_data = post_data | self.address_form_fields
         response = self.client.post(url, data=post_data)
+
         assert response.status_code == 302
         user = User.objects.get(id=user.id)
         self._test_address_autocomplete(user=user, post_data=post_data)
@@ -923,12 +929,13 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         response = self.client.get(url)
         # Address is mandatory.
         post_data = {
+            "title": "M",
             "email": "bob@saintclar.net",
             "first_name": "Bob",
             "last_name": "Saint Clar",
             "birthdate": "20/12/1978",
             "phone": "0610203050",
-            "lack_of_pole_emploi_id_reason": user.REASON_NOT_REGISTERED,
+            "lack_of_pole_emploi_id_reason": LackOfPoleEmploiId.REASON_NOT_REGISTERED,
             # Address fallback fields,
             "address_for_autocomplete": "26 rue du Labrador",
             "address_line_1": "102 Quai de Jemmapes",

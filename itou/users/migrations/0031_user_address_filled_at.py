@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("users", "0023_remove_user_birth_country_remove_user_birth_place"),
+        ("users", "0030_user_insee_city"),
     ]
 
     operations = [

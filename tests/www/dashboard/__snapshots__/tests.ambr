@@ -59,6 +59,59 @@
 
 
 
+=======
+
+
+
+
+                                                          <li>
+                                                              <strong>Civilité</strong>
+                                                          </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                          <li>
+                                                              <strong>Téléphone</strong>
+                                                          </li>
+
+
+
+                                                          <li>
+                                                              <strong>Adresse</strong>
+                                                          </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> 2819cab62 (Fix dashboard tests)
                                               </ul>
                                           <p></p>
                                       </div>
@@ -81,6 +134,7 @@
                                           <p class="mb-0">
                                               Les champs suivants ne sont pas renseignés :
                                               </p><ul>
+<<<<<<< HEAD
 
 
 
@@ -122,12 +176,62 @@
 
 
 
+=======
+
+
+
+
+                                                          <li>
+                                                              <strong>Civilité</strong>
+                                                          </li>
+
+
+
+
+
+
+
+
+
+
+
+                                                          <li>
+                                                              <strong>Date de naissance</strong>
+                                                          </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> 2819cab62 (Fix dashboard tests)
                                               </ul>
                                           <p></p>
                                       </div>
                                   </div>
                               </div>
   '''
+# ---
 # name: EditUserInfoViewTest.test_update_address[user address input]
-  '<input autocomplete="off" class="js-address-autocomplete-input form-control" data-autocomplete-source-url="None/search/" data-autosubmit-on-enter-pressed="0" id="id_address_for_autocomplete" name="address_for_autocomplete" placeholder="16, rue Eric Tabarly" required="" title="" type="text" value="10 Rue du Moulin du Gue, 35400 Saint-Malo"/>'
+  '<input autocomplete="off" class="js-address-autocomplete-input form-control" data-autocomplete-source-url="https://api-adresse.data.gouv.fr/search/" data-autosubmit-on-enter-pressed="0" id="id_address_for_autocomplete" name="address_for_autocomplete" placeholder="16, rue Eric Tabarly" required="" type="text" value="10 Rue du Moulin du Gue, 35400 Saint-Malo"/>'
 # ---

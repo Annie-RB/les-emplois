@@ -105,7 +105,7 @@ class JobSeekerAddressForm(forms.ModelForm):
 
 
 class EditJobSeekerInfoForm(
-    JobSeekerAddressForm, JobSeekerNIRUpdateMixin, JobSeekerProfileFieldsMixin, SSOReadonlyMixin, forms.ModelForm
+    JobSeekerNIRUpdateMixin, JobSeekerProfileFieldsMixin, JobSeekerAddressForm, SSOReadonlyMixin, forms.ModelForm
 ):
     """
     Edit a job seeker profile.
@@ -128,8 +128,6 @@ class EditJobSeekerInfoForm(
             "last_name",
             "birthdate",
             "phone",
-            "pole_emploi_id",
-            "lack_of_pole_emploi_id_reason",
         ] + JobSeekerAddressForm.Meta.fields
 
         help_texts = {

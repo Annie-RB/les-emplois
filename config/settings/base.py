@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from ..sentry import sentry_init
 
+
 load_dotenv()
 
 # Django settings
