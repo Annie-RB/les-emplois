@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
@@ -13,7 +14,7 @@ from itou.users.enums import IdentityProvider
 from itou.users.forms import JobSeekerProfileFieldsMixin
 from itou.users.models import JobSeekerProfile, User
 from itou.utils import constants as global_constants
-from itou.utils.widgets import AddressAutocompleteWidget, DuetDatePickerWidget
+from itou.utils.widgets import DuetDatePickerWidget, RemoteAutocompleteSelect2Widget
 
 
 class SSOReadonlyMixin:
@@ -30,11 +31,6 @@ class SSOReadonlyMixin:
 
 
 class JobSeekerAddressForm(forms.ModelForm):
-    address_for_autocomplete = forms.CharField(
-        label="Adresse",
-        required=True,
-        widget=AddressAutocompleteWidget(),
-    )
     address_line_1 = forms.CharField(
         label="Adresse", widget=forms.TextInput(attrs={"placeholder": "102 Quai de Jemmapes"})
     )
@@ -64,15 +60,27 @@ class JobSeekerAddressForm(forms.ModelForm):
         if self.instance:
             job_seeker = self.instance
             if job_seeker.address_line_1:
-                self.fields["address_for_autocomplete"].initial = job_seeker.geocoding_address
+                self.fields["address_for_autocomplete"] = forms.CharField(
+                    label="Adresse",
+                    required=True,
+                    widget=RemoteAutocompleteSelect2Widget(
+                        attrs={
+                            "data-ajax--url": f"{settings.API_BAN_BASE_URL}/search/",
+                            "data-ajax--cache": "true",
+                            "data-ajax--type": "GET",
+                            "data-minimum-input-length": 3,
+                            "data-placeholder": "Ex. Poitiers",
+                        },
+                        choices=[(0, job_seeker.geocoding_address)],
+                    ),
+                )
+                self.initial["address_for_autocomplete"] = 0
             if job_seeker.address_line_2:
                 self.fields["address_line_2"].initial = job_seeker.address_line_2
 
     class Meta:
         model = User
         fields = [
-            # Make sure this field is the first one.
-            "address_for_autocomplete",
             "address_line_1",
             "address_line_2",
             "post_code",

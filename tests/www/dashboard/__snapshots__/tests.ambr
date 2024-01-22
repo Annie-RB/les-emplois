@@ -134,7 +134,6 @@
                                           <p class="mb-0">
                                               Les champs suivants ne sont pas renseignés :
                                               </p><ul>
-<<<<<<< HEAD
 
 
 
@@ -224,7 +223,6 @@
 
 
 
->>>>>>> 2819cab62 (Fix dashboard tests)
                                               </ul>
                                           <p></p>
                                       </div>
@@ -233,5 +231,8 @@
   '''
 # ---
 # name: EditUserInfoViewTest.test_update_address[user address input]
-  '<input autocomplete="off" class="js-address-autocomplete-input form-control" data-autocomplete-source-url="https://api-adresse.data.gouv.fr/search/" data-autosubmit-on-enter-pressed="0" id="id_address_for_autocomplete" name="address_for_autocomplete" placeholder="16, rue Eric Tabarly" required="" type="text" value="10 Rue du Moulin du Gue, 35400 Saint-Malo"/>'
+  '''
+  <select class="form-select django-select2" data-ajax--cache="true" data-ajax--type="GET" data-ajax--url="https://api-adresse.data.gouv.fr/search/" data-allow-clear="false" data-minimum-input-length="3" data-placeholder="Ex. Poitiers" data-theme="bootstrap-5" id="id_address_for_autocomplete" lang="fr" name="address_for_autocomplete">
+  </select>
+  '''
 # ---

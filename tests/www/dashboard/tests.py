@@ -919,7 +919,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         # Ensure the job seeker's address is displayed in the autocomplete input field.
         url = reverse("dashboard:edit_user_info")
         response = self.client.get(url)
-        results_section = parse_response_to_soup(response, selector=".js-address-autocomplete-input")
+        results_section = parse_response_to_soup(response, selector="#id_address_for_autocomplete")
         assert str(results_section) == self.snapshot(name="user address input")
 
     def test_update_address_unavailable_api(self):

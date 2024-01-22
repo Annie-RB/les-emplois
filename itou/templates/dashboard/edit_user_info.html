@@ -106,4 +106,96 @@
         {% comment %} Needed for the AddressAutocompleteWidget {% endcomment %}
         {{ form.media }}
     {% endif %}
+
+    <script nonce="{{ CSP_NONCE }}">
+        $(document).ready(function() {
+
+
+            let autocompleteNbErrors = 0;
+            let addressSearchInput = $("#id_address_for_autocomplete");
+            let addressLine1Input = $("#id_address_line_1");
+            let addressLine2Input = $("#id_address_line_2");
+            let postCodeInput = $("#id_post_code");
+            let inseeCodeHiddenInput = $("#id_insee_code");
+            let longitudeHiddenInput = $("#id_longitude");
+            let latitudeHiddenInput = $("#id_latitude");
+            let geocodingScoreHiddenInput = $("#id_geocoding_score");
+
+
+            // Hide fallback fields.
+            let fallbackFields = [addressLine1Input, postCodeInput];
+            fallbackFields.forEach((element) => {
+                $(element).parent(".form-group").addClass("d-none");
+            });
+
+            addressSearchInput.on('select2:select', function(e) {
+                addressLine1Input.val(e.params.data.name);
+                postCodeInput.val(e.params.data.postcode);
+                inseeCodeHiddenInput.val(e.params.data.citycode);
+                longitudeHiddenInput.val(e.params.data.longitude);
+                latitudeHiddenInput.val(e.params.data.latitude);
+                geocodingScoreHiddenInput.val(e.params.data.score);
+            });
+            addressSearchInput.select2({
+                ajax: {
+                    processResults: function(data) {
+                        console.log(data);
+                        // Reset debounce counter
+                        autocompleteNbErrors = 0;
+                        var results = data.features.map(function(item, index) {
+                            var prop = item.properties;
+                            return {
+                                id: prop.id,
+                                text: prop.label,
+                                city: prop.city,
+                                name: prop.name,
+                                postcode: prop.postcode,
+                                citycode: prop.citycode,
+                                street: prop.street,
+                                longitude: item.geometry.coordinates[0],
+                                latitude: item.geometry.coordinates[1],
+                                score: prop.score
+                            }
+                        });
+                        return {
+                            results
+                        };
+                    },
+                    error: (jqXHR, textStatus, errorThrown) => {
+
+                        // Debounce errors. Display the error fallback only when we detect 3 errors in a row
+                        // For some reasons, the BAN API car return temporory errors
+                        if (autocompleteNbErrors < 2) {
+                            return;
+                        }
+
+                        autocompleteNbErrors++;
+
+                        // Delete any initial data that may be present if the job seeker already had an address.
+                        let fieldstoBeCleaned = [
+                            addressLine1Input,
+                            addressLine2Input,
+                            postCodeInput,
+                            inseeCodeHiddenInput,
+                            longitudeHiddenInput,
+                            latitudeHiddenInput,
+                        ];
+                        fieldstoBeCleaned.forEach((element) => {
+                            $(element).val("");
+                        });
+                        let error_message =
+                            "Une erreur s'est produite lors de la recherche de l'adresse. Merci de la renseigner dans les champs ci-dessous.";
+                        let html = `<div class='mt-4 alert alert-primary' role='alert'>${error_message}</div>`;
+                        $(addressSearchInput).prop("disabled", true);
+                        $(addressSearchInput).after(html);
+                        fallbackFields.forEach((element) => {
+                            $(element).parent(".form-group").removeClass("d-none");
+                            $(element).parent(".form-group").addClass("form-group-required");
+                            $(element).prop("required", true);
+                        });
+                    },
+                }
+            })
+        })
+    </script>
 {% endblock %}

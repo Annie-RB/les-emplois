@@ -30,3 +30,5 @@ AWS_S3_ENDPOINT_URL = f"http://{os.getenv('CELLAR_ADDON_HOST', 'localhost:9000')
 AWS_S3_ACCESS_KEY_ID = "minioadmin"
 AWS_S3_SECRET_ACCESS_KEY = "minioadmin"
 AWS_STORAGE_BUCKET_NAME = "tests"
+
+API_BAN_BASE_URL = "https://api-adresse.data.gouv.fr"
