@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone as tz_datetime
 from functools import partial
 from urllib.parse import urlencode
 
@@ -815,8 +815,11 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         assert user.city == self.city.name
         assert user.latitude == float(post_data["latitude"])
         assert user.longitude == float(post_data["longitude"])
+        assert user.address_filled_at == datetime(2023, 3, 10, tzinfo=tz_datetime.utc)
+        assert user.geocoding_updated_at == datetime(2023, 3, 10, tzinfo=tz_datetime.utc)
 
     @override_settings(TALLY_URL="https://tally.so")
+    @freeze_time("2023-03-10")
     def test_edit_with_nir(self):
         user = JobSeekerFactory()
         self.client.force_login(user)
@@ -887,10 +890,10 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         assert response.status_code == 200
         assert response.context["form"].errors.get("title") == ["Ce champ est obligatoire."]
 
-    @override_settings(API_BAN_BASE_URL="https://api-adresse.data.gouv.fr")
     @pytest.mark.usefixtures("unittest_compatibility")
+    @freeze_time("2023-03-10")
     def test_update_address(self):
-        user = JobSeekerFactory()
+        user = JobSeekerWithAddressFactory()
         self.client.force_login(user)
         url = reverse("dashboard:edit_user_info")
         response = self.client.get(url)
@@ -949,6 +952,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         assert user.address_line_2 == post_data["address_line_2"]
         assert user.post_code == post_data["post_code"]
 
+    @freeze_time("2023-03-10")
     def test_edit_with_lack_of_nir_reason(self):
         user = JobSeekerFactory(
             jobseeker_profile__nir="", jobseeker_profile__lack_of_nir_reason=LackOfNIRReason.TEMPORARY_NUMBER
@@ -982,6 +986,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         assert user.jobseeker_profile.nir == NEW_NIR.replace(" ", "")
         self._test_address_autocomplete(user=user, post_data=post_data)
 
+    @freeze_time("2023-03-10")
     def test_edit_without_nir_information(self):
         user = JobSeekerFactory(jobseeker_profile__nir="", jobseeker_profile__lack_of_nir_reason="")
         self.client.force_login(user)
@@ -1044,6 +1049,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         assert user.jobseeker_profile.nir == ""
         self._test_address_autocomplete(user=user, post_data=post_data)
 
+    @freeze_time("2023-03-10")
     def test_edit_sso(self):
         user = JobSeekerFactory(
             identity_provider=IdentityProvider.FRANCE_CONNECT,

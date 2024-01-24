@@ -105,10 +105,12 @@ class JobSeekerAddressForm(forms.ModelForm):
                 raise ValidationError("Cette ville n'existe pas dans le référentiel de l'INSEE.")
 
         if city:
+            self.instance.city = city.name
             self.instance.insee_city = city
             # The INSEE code necessarily comes from the BAN and has been validated manually.
             # Arriving here means we have correctly resolved an address, write that down.
-            self.instance.address_resolved_at = timezone.now()
+            self.instance.geocoding_updated_at = timezone.now()
+
         return insee_code
 
     def clean(self):
@@ -186,6 +188,13 @@ class EditJobSeekerInfoForm(
 
     def save(self, commit=True):
         self.instance.last_checked_at = timezone.now()
+
+        # The user has changed his address, keep track of it
+        if self.instance.ban_api_resolved_address != self.instance.geocoding_address:
+            self.instance.address_filled_at = timezone.now()
+
+        self.instance.ban_api_resolved_address = self.instance.geocoding_address
+
         return super().save(commit=commit)
 
 
