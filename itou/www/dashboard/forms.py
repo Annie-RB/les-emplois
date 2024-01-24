@@ -97,14 +97,15 @@ class JobSeekerAddressForm(forms.ModelForm):
     def clean_insee_code(self):
         insee_code = self.cleaned_data["insee_code"]
         city = None
+
         if insee_code:
             try:
                 city = City.objects.get(code_insee=insee_code)
             except City.DoesNotExist:
                 raise ValidationError("Cette ville n'existe pas dans le référentiel de l'INSEE.")
+
         if city:
-            # FIXME(vperron) : Someday, resolve every city name + post code into an actual cities.City.
-            self.instance.city = city.name
+            self.instance.insee_city = city
             # The INSEE code necessarily comes from the BAN and has been validated manually.
             # Arriving here means we have correctly resolved an address, write that down.
             self.instance.address_resolved_at = timezone.now()
