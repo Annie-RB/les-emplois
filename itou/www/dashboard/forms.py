@@ -57,26 +57,33 @@ class JobSeekerAddressForm(forms.ModelForm):
         for field_name in js_handled_fields:
             self.fields[field_name].widget.attrs["class"] = f"js-{field_name.replace('_', '-')}"
             self.fields[field_name].required = False
+
+        choices = []
         if self.instance:
             job_seeker = self.instance
             if job_seeker.address_line_1:
-                self.fields["address_for_autocomplete"] = forms.CharField(
-                    label="Adresse",
-                    required=True,
-                    widget=RemoteAutocompleteSelect2Widget(
-                        attrs={
-                            "data-ajax--url": f"{settings.API_BAN_BASE_URL}/search/",
-                            "data-ajax--cache": "true",
-                            "data-ajax--type": "GET",
-                            "data-minimum-input-length": 3,
-                            "data-placeholder": "Ex. Poitiers",
-                        },
-                        choices=[(0, job_seeker.geocoding_address)],
-                    ),
-                )
-                self.initial["address_for_autocomplete"] = 0
+                choices = [(0, job_seeker.geocoding_address)]
+
             if job_seeker.address_line_2:
                 self.fields["address_line_2"].initial = job_seeker.address_line_2
+
+        self.fields["address_for_autocomplete"] = forms.CharField(
+            label="Adresse",
+            required=True,
+            widget=RemoteAutocompleteSelect2Widget(
+                attrs={
+                    "data-ajax--url": f"{settings.API_BAN_BASE_URL}/search/",
+                    "data-ajax--cache": "true",
+                    "data-ajax--type": "GET",
+                    "data-minimum-input-length": 3,
+                    "data-placeholder": "Ex. Poitiers",
+                },
+                choices=choices,
+            ),
+        )
+
+        if len(choices) > 0:
+            self.initial["address_for_autocomplete"] = 0
 
     class Meta:
         model = User
