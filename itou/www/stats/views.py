@@ -115,7 +115,7 @@ def render_stats(request, context, params=None, template_name="stats/stats.html"
         tally_embed_form_id = metabase_dashboard.get("tally_embed_form_id")
 
     base_context = {
-        "iframeurl": mb.metabase_embedded_url(request=request, params=params),
+        "iframe_url": mb.metabase_embedded_url(request=request, params=params),
         "stats_base_url": settings.METABASE_SITE_URL,
         "tally_popup_form_id": tally_popup_form_id,
         "tally_embed_form_id": tally_embed_form_id,
@@ -176,7 +176,7 @@ def stats_pilotage(request, dashboard_id):
         raise PermissionDenied
 
     context = {
-        "iframeurl": mb.metabase_embedded_url(dashboard_id=dashboard_id, with_title=True),
+        "iframe_url": mb.metabase_embedded_url(dashboard_id=dashboard_id, with_title=True),
     }
     return render_stats(request=request, context=context, template_name="stats/stats_pilotage.html")
 
