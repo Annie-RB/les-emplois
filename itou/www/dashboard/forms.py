@@ -42,6 +42,7 @@ class JobSeekerAddressForm(forms.ModelForm):
     latitude = forms.FloatField(widget=forms.HiddenInput(), required=False)
     longitude = forms.FloatField(widget=forms.HiddenInput(), required=False)
     geocoding_score = forms.FloatField(widget=forms.HiddenInput(), required=False)
+    ban_api_resolved_address = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,10 +50,12 @@ class JobSeekerAddressForm(forms.ModelForm):
             "address_line_1",
             "address_line_2",
             "post_code",
+            "city",
             "insee_code",
             "latitude",
             "longitude",
             "geocoding_score",
+            "ban_api_resolved_address",
         ]
         for field_name in js_handled_fields:
             self.fields[field_name].widget.attrs["class"] = f"js-{field_name.replace('_', '-')}"
@@ -76,7 +79,7 @@ class JobSeekerAddressForm(forms.ModelForm):
                     "data-ajax--cache": "true",
                     "data-ajax--type": "GET",
                     "data-minimum-input-length": 3,
-                    "data-placeholder": "Ex. Poitiers",
+                    "data-placeholder": "Ex. 102 Quai de Jemmapes 75010 Paris",
                 },
                 choices=choices,
             ),
@@ -91,7 +94,9 @@ class JobSeekerAddressForm(forms.ModelForm):
             "address_line_1",
             "address_line_2",
             "post_code",
+            "city",
             "geocoding_score",
+            "ban_api_resolved_address",
         ]
 
     def clean_insee_code(self):
@@ -107,18 +112,38 @@ class JobSeekerAddressForm(forms.ModelForm):
         if city:
             self.instance.city = city.name
             self.instance.insee_city = city
-            # The INSEE code necessarily comes from the BAN and has been validated manually.
-            # Arriving here means we have correctly resolved an address, write that down.
-            self.instance.geocoding_updated_at = timezone.now()
+            self.cleaned_data["city"] = city.name
 
         return insee_code
 
     def clean(self):
         super().clean()
+        address_line_1 = self.cleaned_data.get("address_line_1")
+
+        # Address was filled (manually with fallback or programatically with select2)
+        # the address field should not be required anymore as we don't really use it
+        if address_line_1:
+            if "address_for_autocomplete" in self.errors:
+                del self.errors["address_for_autocomplete"]
+                self.cleaned_data["address_for_autocomplete"] = None
+
         latitude = self.cleaned_data["latitude"]
         longitude = self.cleaned_data["longitude"]
+
         if latitude and longitude:
             self.instance.coords = coords_to_geometry(lat=latitude, lon=longitude)
+
+        new_address = self.cleaned_data["ban_api_resolved_address"]
+        old_address = self.instance.ban_api_resolved_address
+
+        # If new_address is None, we were using the fallback system or an already filled address
+        if new_address and new_address != old_address:
+            self.instance.address_filled_at = timezone.now()
+            self.instance.geocoding_updated_at = timezone.now()
+
+        if self.cleaned_data["post_code"] is None:
+            self.cleaned_data["post_code"] = ""
+
         return self.cleaned_data
 
 
@@ -189,11 +214,8 @@ class EditJobSeekerInfoForm(
     def save(self, commit=True):
         self.instance.last_checked_at = timezone.now()
 
-        # The user has changed his address, keep track of it
-        if self.instance.ban_api_resolved_address != self.instance.geocoding_address:
-            self.instance.address_filled_at = timezone.now()
-
-        self.instance.ban_api_resolved_address = self.instance.geocoding_address
+        if self.instance.ban_api_resolved_address == "":
+            self.instance.ban_api_resolved_address = None
 
         return super().save(commit=commit)
 

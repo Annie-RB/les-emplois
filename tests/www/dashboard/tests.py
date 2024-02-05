@@ -798,7 +798,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
     @property
     def address_form_fields(self):
         return {
-            "address_for_autocomplete": "10 rue du Moulin du Gue 35400 Saint-Malo",
+            "ban_api_resolved_address": "10 rue du Moulin du Gue 35400 Saint-Malo",
             "address_line_1": "10 Rue du Moulin du Gue",
             "address_line_2": "appartement 240",
             "insee_code": "35288",
@@ -907,6 +907,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             "phone": "0610203050",
             "lack_of_pole_emploi_id_reason": LackOfPoleEmploiId.REASON_NOT_REGISTERED,
         }
+
         response = self.client.post(url, data=post_data)
         assert response.status_code == 200
         assert not response.context["form"].is_valid()
