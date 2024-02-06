@@ -6,6 +6,7 @@ import datetime
 import operator
 
 from django import forms
+from django.conf import settings
 from django.contrib.gis.forms import widgets as gis_widgets
 from django.db.models import Q
 from django.forms.models import ModelChoiceIterator
@@ -117,3 +118,18 @@ class RemoteAutocompleteSelect2Widget(Select2Widget):
             subgroup = default[1]
             subgroup.append(self.create_option(name, option_value, option_label, selected_choices, index))
         return groups
+
+
+class AddressAutocompleteWidget(RemoteAutocompleteSelect2Widget):
+    class Media:
+        js = ["js/address_autocomplete_fields.js"]
+
+    def build_attrs(self, base_attrs, extra_attrs=None):
+        attrs = super().build_attrs(base_attrs, extra_attrs=extra_attrs)
+        attrs["data-ajax--url"] = f"{settings.API_BAN_BASE_URL}/search/"
+        attrs["data-ajax--cache"] = "true"
+        attrs["data-ajax--type"] = "GET"
+        attrs["data-minimum-input-length"] = 3
+        attrs["data-placeholder"] = "Ex. 102 Quai de Jemmapes 75010 Paris"
+
+        return attrs

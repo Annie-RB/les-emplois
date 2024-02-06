@@ -1,4 +1,5 @@
-from datetime import date, datetime, timezone as tz_datetime
+from datetime import date, datetime
+from datetime import timezone as tz_datetime
 from functools import partial
 from urllib.parse import urlencode
 
@@ -14,7 +15,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
 from freezegun import freeze_time
-from pytest_django.asserts import assertContains, assertNotContains, assertRedirects
+from pytest_django.asserts import (assertContains, assertNotContains,
+                                   assertRedirects)
 from rest_framework.authtoken.models import Token
 
 from itou.cities.models import City
@@ -23,49 +25,45 @@ from itou.employee_record.enums import Status
 from itou.institutions.enums import InstitutionKind
 from itou.job_applications.notifications import (
     NewQualifiedJobAppEmployersNotification,
-    NewSpontaneousJobAppEmployersNotification,
-)
+    NewSpontaneousJobAppEmployersNotification)
 from itou.prescribers.enums import PrescriberOrganizationKind
 from itou.prescribers.models import PrescriberOrganization
 from itou.siae_evaluations import enums as evaluation_enums
 from itou.siae_evaluations.constants import CAMPAIGN_VIEWABLE_DURATION
 from itou.siae_evaluations.models import Sanctions
-from itou.users.enums import IdentityProvider, LackOfNIRReason, LackOfPoleEmploiId, Title, UserKind
+from itou.users.enums import (IdentityProvider, LackOfNIRReason,
+                              LackOfPoleEmploiId, Title, UserKind)
 from itou.users.models import User
 from itou.utils import constants as global_constants
 from itou.utils.models import InclusiveDateRange
-from itou.utils.templatetags.format_filters import format_approval_number, format_siret
+from itou.utils.templatetags.format_filters import (format_approval_number,
+                                                    format_siret)
 from itou.www.dashboard.forms import EditUserEmailForm
-from tests.approvals.factories import ApprovalFactory, ProlongationRequestFactory
-from tests.companies.factories import (
-    CompanyAfterGracePeriodFactory,
-    CompanyFactory,
-    CompanyMembershipFactory,
-    CompanyPendingGracePeriodFactory,
-    CompanyWithMembershipAndJobsFactory,
-)
+from tests.approvals.factories import (ApprovalFactory,
+                                       ProlongationRequestFactory)
+from tests.companies.factories import (CompanyAfterGracePeriodFactory,
+                                       CompanyFactory,
+                                       CompanyMembershipFactory,
+                                       CompanyPendingGracePeriodFactory,
+                                       CompanyWithMembershipAndJobsFactory)
 from tests.employee_record.factories import EmployeeRecordFactory
-from tests.institutions.factories import InstitutionFactory, InstitutionMembershipFactory, LaborInspectorFactory
-from tests.job_applications.factories import JobApplicationFactory, JobApplicationSentByPrescriberFactory
+from tests.institutions.factories import (InstitutionFactory,
+                                          InstitutionMembershipFactory,
+                                          LaborInspectorFactory)
+from tests.job_applications.factories import (
+    JobApplicationFactory, JobApplicationSentByPrescriberFactory)
 from tests.openid_connect.inclusion_connect.test import (
-    InclusionConnectBaseTestCase,
-    override_inclusion_connect_settings,
-)
-from tests.openid_connect.inclusion_connect.tests import OIDC_USERINFO, mock_oauth_dance
+    InclusionConnectBaseTestCase, override_inclusion_connect_settings)
+from tests.openid_connect.inclusion_connect.tests import (OIDC_USERINFO,
+                                                          mock_oauth_dance)
 from tests.prescribers import factories as prescribers_factories
 from tests.siae_evaluations.factories import (
-    EvaluatedAdministrativeCriteriaFactory,
-    EvaluatedJobApplicationFactory,
-    EvaluatedSiaeFactory,
-    EvaluationCampaignFactory,
-)
-from tests.users.factories import (
-    DEFAULT_PASSWORD,
-    EmployerFactory,
-    JobSeekerFactory,
-    JobSeekerWithAddressFactory,
-    PrescriberFactory,
-)
+    EvaluatedAdministrativeCriteriaFactory, EvaluatedJobApplicationFactory,
+    EvaluatedSiaeFactory, EvaluationCampaignFactory)
+from tests.users.factories import (DEFAULT_PASSWORD, EmployerFactory,
+                                   JobSeekerFactory,
+                                   JobSeekerWithAddressFactory,
+                                   PrescriberFactory)
 from tests.utils.test import BASE_NUM_QUERIES, TestCase, parse_response_to_soup
 
 
@@ -795,10 +793,9 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         )
         self.NIR_UPDATE_TALLY_LINK_LABEL = "Demander la correction du numéro de sécurité sociale"
 
-    @property
-    def address_form_fields(self):
+    def address_form_fields(self, ban_api_resolved_address=True):
         return {
-            "ban_api_resolved_address": "10 rue du Moulin du Gue 35400 Saint-Malo",
+            "ban_api_resolved_address": "10 rue du Moulin du Gue 35400 Saint-Malo" if ban_api_resolved_address else "",
             "address_line_1": "10 Rue du Moulin du Gue",
             "address_line_2": "appartement 240",
             "insee_code": "35288",
@@ -808,15 +805,16 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             "geocoding_score": 0.9714,
         }
 
-    def _test_address_autocomplete(self, user, post_data):
+    def _test_address_autocomplete(self, user, post_data, ban_api_resolved_address=True):
         assert user.address_line_1 == post_data["address_line_1"]
         assert user.address_line_2 == post_data["address_line_2"]
         assert user.post_code == post_data["post_code"]
         assert user.city == self.city.name
         assert user.latitude == float(post_data["latitude"])
         assert user.longitude == float(post_data["longitude"])
-        assert user.address_filled_at == datetime(2023, 3, 10, tzinfo=tz_datetime.utc)
-        assert user.geocoding_updated_at == datetime(2023, 3, 10, tzinfo=tz_datetime.utc)
+        if ban_api_resolved_address:
+            assert user.address_filled_at == datetime(2023, 3, 10, tzinfo=tz_datetime.utc)
+            assert user.geocoding_updated_at == datetime(2023, 3, 10, tzinfo=tz_datetime.utc)
 
     @override_settings(TALLY_URL="https://tally.so")
     @freeze_time("2023-03-10")
@@ -855,7 +853,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             "birthdate": "20/12/1978",
             "phone": "0610203050",
             "lack_of_pole_emploi_id_reason": LackOfPoleEmploiId.REASON_NOT_REGISTERED,
-        } | self.address_form_fields
+        } | self.address_form_fields()
         response = self.client.post(url, data=post_data)
         assert response.status_code == 302
 
@@ -884,7 +882,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             "lack_of_pole_emploi_id_reason": user.jobseeker_profile.lack_of_pole_emploi_id_reason,
             "lack_of_nir": False,
             "nir": user.jobseeker_profile.nir,
-        } | self.address_form_fields
+        } | self.address_form_fields()
 
         response = self.client.post(url, data=post_data)
         assert response.status_code == 200
@@ -911,13 +909,22 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         response = self.client.post(url, data=post_data)
         assert response.status_code == 200
         assert not response.context["form"].is_valid()
+        assert response.context["form"].errors.get("address_for_autocomplete") == ["Ce champ est obligatoire."]
 
-        # Now try again providing every required field.
-        post_data = post_data | self.address_form_fields
+        # Now try again in fallback mode (ban_api_resolved_address is missing)
+        post_data = post_data | self.address_form_fields(ban_api_resolved_address=False)
         response = self.client.post(url, data=post_data)
 
         assert response.status_code == 302
-        user = User.objects.get(id=user.id)
+        user.refresh_from_db()
+        self._test_address_autocomplete(user=user, post_data=post_data, ban_api_resolved_address=False)
+
+        # Now try again providing every required field.
+        post_data = post_data | self.address_form_fields()
+        response = self.client.post(url, data=post_data)
+
+        assert response.status_code == 302
+        user.refresh_from_db()
         self._test_address_autocomplete(user=user, post_data=post_data)
 
         # Ensure the job seeker's address is displayed in the autocomplete input field.
@@ -948,7 +955,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         }
         response = self.client.post(url, data=post_data)
         assert response.status_code == 302
-        user = User.objects.get(id=user.id)
+        user.refresh_from_db()
         assert user.address_line_1 == post_data["address_line_1"]
         assert user.address_line_2 == post_data["address_line_2"]
         assert user.post_code == post_data["post_code"]
@@ -977,7 +984,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             "lack_of_pole_emploi_id_reason": LackOfPoleEmploiId.REASON_NOT_REGISTERED,
             "lack_of_nir": False,
             "nir": NEW_NIR,
-        } | self.address_form_fields
+        } | self.address_form_fields()
 
         response = self.client.post(url, data=post_data)
         assert response.status_code == 302
@@ -1008,7 +1015,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             "lack_of_pole_emploi_id_reason": LackOfPoleEmploiId.REASON_NOT_REGISTERED,
             "lack_of_nir": False,
             "nir": NEW_NIR,
-        } | self.address_form_fields
+        } | self.address_form_fields()
         response = self.client.post(url, data=post_data)
         assert response.status_code == 302
 
@@ -1071,7 +1078,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             "birthdate": "20/12/1978",
             "phone": "0610203050",
             "lack_of_pole_emploi_id_reason": LackOfPoleEmploiId.REASON_NOT_REGISTERED,
-        } | self.address_form_fields
+        } | self.address_form_fields()
 
         response = self.client.post(url, data=post_data)
         assert response.status_code == 302

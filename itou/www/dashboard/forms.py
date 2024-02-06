@@ -1,5 +1,4 @@
 from django import forms
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
@@ -14,7 +13,7 @@ from itou.users.enums import IdentityProvider
 from itou.users.forms import JobSeekerProfileFieldsMixin
 from itou.users.models import JobSeekerProfile, User
 from itou.utils import constants as global_constants
-from itou.utils.widgets import DuetDatePickerWidget, RemoteAutocompleteSelect2Widget
+from itou.utils.widgets import AddressAutocompleteWidget, DuetDatePickerWidget
 
 
 class SSOReadonlyMixin:
@@ -67,25 +66,15 @@ class JobSeekerAddressForm(forms.ModelForm):
             if job_seeker.address_line_1:
                 choices = [(0, job_seeker.geocoding_address)]
 
-            if job_seeker.address_line_2:
-                self.fields["address_line_2"].initial = job_seeker.address_line_2
-
         self.fields["address_for_autocomplete"] = forms.CharField(
             label="Adresse",
             required=True,
-            widget=RemoteAutocompleteSelect2Widget(
-                attrs={
-                    "data-ajax--url": f"{settings.API_BAN_BASE_URL}/search/",
-                    "data-ajax--cache": "true",
-                    "data-ajax--type": "GET",
-                    "data-minimum-input-length": 3,
-                    "data-placeholder": "Ex. 102 Quai de Jemmapes 75010 Paris",
-                },
+            widget=AddressAutocompleteWidget(
                 choices=choices,
             ),
         )
 
-        if len(choices) > 0:
+        if choices:
             self.initial["address_for_autocomplete"] = 0
 
     class Meta:

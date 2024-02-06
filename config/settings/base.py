@@ -633,9 +633,7 @@ CSP_WORKER_SRC = [
 ]
 
 if API_BAN_BASE_URL:
-    CSP_CONNECT_SRC += [
-        API_BAN_BASE_URL,
-    ]
+    CSP_CONNECT_SRC.append(API_BAN_BASE_URL)
 
 CSP_INCLUDE_NONCE_IN = ["script-src", "script-src-elem"]
 CSP_REPORT_URI = os.getenv("CSP_REPORT_URI", None)
