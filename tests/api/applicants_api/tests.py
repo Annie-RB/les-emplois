@@ -136,3 +136,15 @@ class ApplicantsAPITest(APITestCase):
                 "pays_naissance": job_seeker.jobseeker_profile.birth_country.name,
                 "lien_cv": None,
             } == result
+
+    def test_rate_limiting(self):
+        company = CompanyFactory(with_membership=True)
+        user = company.members.first()
+        self.client.force_authenticate(user)
+        # settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["user"]
+        for _ in range(12):
+            response = self.client.get(self.url, format="json")
+            assert response.status_code == 200
+        response = self.client.get(self.url, format="json")
+        # Rate-limited.
+        assert response.status_code == 429
