@@ -56,15 +56,25 @@ class JobSeekerAddressForm(forms.ModelForm):
             "geocoding_score",
             "ban_api_resolved_address",
         ]
+
         for field_name in js_handled_fields:
             self.fields[field_name].widget.attrs["class"] = f"js-{field_name.replace('_', '-')}"
             self.fields[field_name].required = False
 
         choices = []
-        if self.instance:
+        address_choice = None
+
+        if kwargs["data"] and "ban_api_resolved_address" in kwargs["data"]:
+            # The user did a select2 choice, we should refill the choosen address if there was a form error
+            address_choice = kwargs["data"]["ban_api_resolved_address"]
+
+        if self.instance and address_choice is None:
             job_seeker = self.instance
             if job_seeker.address_line_1:
-                choices = [(0, job_seeker.geocoding_address)]
+                address_choice = job_seeker.geocoding_address
+
+        if address_choice is not None:
+            choices = [(0, address_choice)]
 
         self.fields["address_for_autocomplete"] = forms.CharField(
             label="Adresse",

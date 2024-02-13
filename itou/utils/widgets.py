@@ -121,6 +121,18 @@ class RemoteAutocompleteSelect2Widget(Select2Widget):
 
 
 class AddressAutocompleteWidget(RemoteAutocompleteSelect2Widget):
+    # Be careful when using this widget as it needs fields present in the form it is included into
+    #
+    # "address_line_1",
+    # "address_line_2",
+    # "post_code",
+    # "city",
+    # "insee_code",
+    # "latitude",
+    # "longitude",
+    # "geocoding_score",
+    # "ban_api_resolved_address",
+
     class Media:
         js = ["js/address_autocomplete_fields.js"]
 

@@ -906,10 +906,22 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             "lack_of_pole_emploi_id_reason": LackOfPoleEmploiId.REASON_NOT_REGISTERED,
         }
 
+        # Check that address field is mandatory
         response = self.client.post(url, data=post_data)
         assert response.status_code == 200
         assert not response.context["form"].is_valid()
         assert response.context["form"].errors.get("address_for_autocomplete") == ["Ce champ est obligatoire."]
+
+        # Check that when we post a different address than the one of the user and
+        # there is an error in the form (title is missing), the new address is displayed in the select
+        # instead of the one attached to the user
+        response = self.client.post(url, data=post_data | {"title": ""} | self.address_form_fields())
+        assert response.status_code == 200
+        assert not response.context["form"].is_valid()
+        assert response.context["form"].errors.get("title") == ["Ce champ est obligatoire."]
+        print(response.content)
+        results_section = parse_response_to_soup(response, selector="#id_address_for_autocomplete")
+        assert str(results_section) == self.snapshot(name="user address input on error")
 
         # Now try again in fallback mode (ban_api_resolved_address is missing)
         post_data = post_data | self.address_form_fields(ban_api_resolved_address=False)
