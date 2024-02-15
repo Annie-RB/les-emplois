@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from datetime import timezone as tz_datetime
+from datetime import timezone as datetime_tz
 from functools import partial
 from urllib.parse import urlencode
 
@@ -813,8 +813,8 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         assert user.latitude == float(post_data["latitude"])
         assert user.longitude == float(post_data["longitude"])
         if ban_api_resolved_address:
-            assert user.address_filled_at == datetime(2023, 3, 10, tzinfo=tz_datetime.utc)
-            assert user.geocoding_updated_at == datetime(2023, 3, 10, tzinfo=tz_datetime.utc)
+            assert user.address_filled_at == datetime(2023, 3, 10, tzinfo=datetime_tz.utc)
+            assert user.geocoding_updated_at == datetime(2023, 3, 10, tzinfo=datetime_tz.utc)
 
     @override_settings(TALLY_URL="https://tally.so")
     @freeze_time("2023-03-10")
@@ -890,6 +890,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
 
     @pytest.mark.usefixtures("unittest_compatibility")
     @freeze_time("2023-03-10")
+    @override_settings(API_BAN_BASE_URL="http://ban-api")
     def test_update_address(self):
         user = JobSeekerWithAddressFactory()
         self.client.force_login(user)
@@ -919,7 +920,6 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         assert response.status_code == 200
         assert not response.context["form"].is_valid()
         assert response.context["form"].errors.get("title") == ["Ce champ est obligatoire."]
-        print(response.content)
         results_section = parse_response_to_soup(response, selector="#id_address_for_autocomplete")
         assert str(results_section) == self.snapshot(name="user address input on error")
 
