@@ -1,5 +1,4 @@
-from datetime import date, datetime
-from datetime import timezone as datetime_tz
+from datetime import date, datetime, timezone as datetime_tz
 from functools import partial
 from urllib.parse import urlencode
 
@@ -15,8 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
 from freezegun import freeze_time
-from pytest_django.asserts import (assertContains, assertNotContains,
-                                   assertRedirects)
+from pytest_django.asserts import assertContains, assertNotContains, assertRedirects
 from rest_framework.authtoken.models import Token
 
 from itou.cities.models import City
@@ -25,45 +23,49 @@ from itou.employee_record.enums import Status
 from itou.institutions.enums import InstitutionKind
 from itou.job_applications.notifications import (
     NewQualifiedJobAppEmployersNotification,
-    NewSpontaneousJobAppEmployersNotification)
+    NewSpontaneousJobAppEmployersNotification,
+)
 from itou.prescribers.enums import PrescriberOrganizationKind
 from itou.prescribers.models import PrescriberOrganization
 from itou.siae_evaluations import enums as evaluation_enums
 from itou.siae_evaluations.constants import CAMPAIGN_VIEWABLE_DURATION
 from itou.siae_evaluations.models import Sanctions
-from itou.users.enums import (IdentityProvider, LackOfNIRReason,
-                              LackOfPoleEmploiId, Title, UserKind)
+from itou.users.enums import IdentityProvider, LackOfNIRReason, LackOfPoleEmploiId, Title, UserKind
 from itou.users.models import User
 from itou.utils import constants as global_constants
 from itou.utils.models import InclusiveDateRange
-from itou.utils.templatetags.format_filters import (format_approval_number,
-                                                    format_siret)
+from itou.utils.templatetags.format_filters import format_approval_number, format_siret
 from itou.www.dashboard.forms import EditUserEmailForm
-from tests.approvals.factories import (ApprovalFactory,
-                                       ProlongationRequestFactory)
-from tests.companies.factories import (CompanyAfterGracePeriodFactory,
-                                       CompanyFactory,
-                                       CompanyMembershipFactory,
-                                       CompanyPendingGracePeriodFactory,
-                                       CompanyWithMembershipAndJobsFactory)
+from tests.approvals.factories import ApprovalFactory, ProlongationRequestFactory
+from tests.companies.factories import (
+    CompanyAfterGracePeriodFactory,
+    CompanyFactory,
+    CompanyMembershipFactory,
+    CompanyPendingGracePeriodFactory,
+    CompanyWithMembershipAndJobsFactory,
+)
 from tests.employee_record.factories import EmployeeRecordFactory
-from tests.institutions.factories import (InstitutionFactory,
-                                          InstitutionMembershipFactory,
-                                          LaborInspectorFactory)
-from tests.job_applications.factories import (
-    JobApplicationFactory, JobApplicationSentByPrescriberFactory)
+from tests.institutions.factories import InstitutionFactory, InstitutionMembershipFactory, LaborInspectorFactory
+from tests.job_applications.factories import JobApplicationFactory, JobApplicationSentByPrescriberFactory
 from tests.openid_connect.inclusion_connect.test import (
-    InclusionConnectBaseTestCase, override_inclusion_connect_settings)
-from tests.openid_connect.inclusion_connect.tests import (OIDC_USERINFO,
-                                                          mock_oauth_dance)
+    InclusionConnectBaseTestCase,
+    override_inclusion_connect_settings,
+)
+from tests.openid_connect.inclusion_connect.tests import OIDC_USERINFO, mock_oauth_dance
 from tests.prescribers import factories as prescribers_factories
 from tests.siae_evaluations.factories import (
-    EvaluatedAdministrativeCriteriaFactory, EvaluatedJobApplicationFactory,
-    EvaluatedSiaeFactory, EvaluationCampaignFactory)
-from tests.users.factories import (DEFAULT_PASSWORD, EmployerFactory,
-                                   JobSeekerFactory,
-                                   JobSeekerWithAddressFactory,
-                                   PrescriberFactory)
+    EvaluatedAdministrativeCriteriaFactory,
+    EvaluatedJobApplicationFactory,
+    EvaluatedSiaeFactory,
+    EvaluationCampaignFactory,
+)
+from tests.users.factories import (
+    DEFAULT_PASSWORD,
+    EmployerFactory,
+    JobSeekerFactory,
+    JobSeekerWithAddressFactory,
+    PrescriberFactory,
+)
 from tests.utils.test import BASE_NUM_QUERIES, TestCase, parse_response_to_soup
 
 
@@ -827,7 +829,6 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
             + 1  # session
             + 1  # user
             + 1  # jobseeker_profile
-            + 1  # cities_city (EditJobSeekerInfoForm.__init__)
             + 1  # external_data_externaldataimport (extra_data)
             + 3  # update session with savepoint & release
         ):
@@ -887,6 +888,24 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         response = self.client.post(url, data=post_data)
         assert response.status_code == 200
         assert response.context["form"].errors.get("title") == ["Ce champ est obligatoire."]
+
+    def test_required_address_fields_are_present(self):
+        user = JobSeekerWithAddressFactory()
+        self.client.force_login(user)
+        url = reverse("dashboard:edit_user_info")
+        response = self.client.get(url)
+
+        # Those fields are required for the autocomplete javascript to work
+        # Explicitly test the presence of the fields to help a future developer :)
+        self.assertContains(response, 'id="id_address_line_1"')
+        self.assertContains(response, 'id="id_address_line_2"')
+        self.assertContains(response, 'id="id_post_code"')
+        self.assertContains(response, 'id="id_city"')
+        self.assertContains(response, 'id="id_insee_code"')
+        self.assertContains(response, 'id="id_longitude"')
+        self.assertContains(response, 'id="id_latitude"')
+        self.assertContains(response, 'id="id_geocoding_score"')
+        self.assertContains(response, 'id="id_ban_api_resolved_address"')
 
     @pytest.mark.usefixtures("unittest_compatibility")
     @freeze_time("2023-03-10")
@@ -1001,6 +1020,7 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         response = self.client.post(url, data=post_data)
         assert response.status_code == 302
 
+        user.refresh_from_db()
         user.jobseeker_profile.refresh_from_db()
         assert user.jobseeker_profile.lack_of_nir_reason == ""
         assert user.jobseeker_profile.nir == NEW_NIR.replace(" ", "")
@@ -1067,7 +1087,6 @@ class EditUserInfoViewTest(InclusionConnectBaseTestCase):
         user.jobseeker_profile.refresh_from_db()
         assert user.jobseeker_profile.lack_of_nir_reason == ""
         assert user.jobseeker_profile.nir == ""
-        self._test_address_autocomplete(user=user, post_data=post_data)
 
     @freeze_time("2023-03-10")
     def test_edit_sso(self):
@@ -1292,7 +1311,6 @@ class EditJobSeekerInfo(TestCase):
             + 1  # session
             + 3  # user, memberships, company (ItouCurrentOrganizationMiddleware)
             + 1  # job seeker infos (get_object_or_404)
-            + 1  # cities_city (EditJobSeekerInfoForm.__init__)
             + 1  # account_emailaddress (can_edit_email/has_verified_email)
             + 3  # update session with savepoint & release
         ):
@@ -1481,7 +1499,6 @@ class EditJobSeekerInfo(TestCase):
             + 2  # user, memberships (ItouCurrentOrganizationMiddleware)
             + 1  # job seeker infos (get_object_or_404)
             + 1  # prescribers_prescribermembership (can_edit_personal_information/is_prescriber_with_authorized_org)
-            + 1  # cities_city (EditJobSeekerInfoForm.__init__)
             + 1  # account_emailaddress (can_edit_email/has_verified_email)
             + 3  # update session with savepoint & release
         ):

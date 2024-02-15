@@ -76,7 +76,7 @@ htmx.onLoad(function () {
 
         let error_message =
           "Une erreur s'est produite lors de la recherche de l'adresse. Merci de la renseigner dans les champs ci-dessous.";
-        let html = `<div class='mt-4 alert alert-primary' role='alert'>${error_message}</div>`;
+        let html = `<div class='alert alert-primary' role='alert'>${error_message}</div>`;
         $(addressSearchInput).prop("disabled", true);
         $(addressSearchInput).after(html);
         fallbackFields.forEach((element) => {

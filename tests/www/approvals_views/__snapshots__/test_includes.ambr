@@ -187,11 +187,7 @@
           
               <img src="/static/img/pass_iae/logo_pass_iae.svg" width="180" alt="Logo du PASS IAE">
           
-<<<<<<< HEAD
       </div>
-=======
-      </p>
->>>>>>> ade5341c3 (Replace jquery autocomplete by select2)
   
   
   <div class="ps-3 border-start approval-left-border">

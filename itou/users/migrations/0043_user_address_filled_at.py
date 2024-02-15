@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("users", "0030_user_insee_city"),
+        ("users", "0042_drop_user_asp_uid_in_db"),
     ]
 
     operations = [

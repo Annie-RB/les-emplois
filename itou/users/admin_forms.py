@@ -21,9 +21,6 @@ class UserAdminForm(UserChangeForm):
         model = User
         fields = "__all__"
         exclude = ("public_id", "address_filled_at")
-        widgets = {
-            "asp_uid": widgets.AdminTextInputWidget,
-        }
 
     def clean(self):
         self.cleaned_data["is_staff"] = self.instance.kind == UserKind.ITOU_STAFF

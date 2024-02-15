@@ -8,7 +8,8 @@ from itou.common_apps.nir.forms import JobSeekerNIRUpdateMixin
 from itou.geo.utils import coords_to_geometry
 from itou.job_applications.notifications import (
     NewQualifiedJobAppEmployersNotification,
-    NewSpontaneousJobAppEmployersNotification)
+    NewSpontaneousJobAppEmployersNotification,
+)
 from itou.users.enums import IdentityProvider
 from itou.users.forms import JobSeekerProfileFieldsMixin
 from itou.users.models import JobSeekerProfile, User
