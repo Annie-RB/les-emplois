@@ -27,6 +27,7 @@ urlpatterns = [
     # Prescriber stats - PE.
     path("pe/delay/main", views.stats_pe_delay_main, name="stats_pe_delay_main"),
     path("pe/delay/raw", views.stats_pe_delay_raw, name="stats_pe_delay_raw"),
+    path("pe/iae-delay/", views.stats_pe_iae_delay, name="stats_pe_iae_delay"),
     path("pe/conversion/main", views.stats_pe_conversion_main, name="stats_pe_conversion_main"),
     path("pe/conversion/raw", views.stats_pe_conversion_raw, name="stats_pe_conversion_raw"),
     path("pe/state/main", views.stats_pe_state_main, name="stats_pe_state_main"),

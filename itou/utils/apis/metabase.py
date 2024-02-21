@@ -62,6 +62,9 @@ METABASE_DASHBOARDS = {
     #
     # Prescriber stats - PE.
     #
+    "stats_pe_iae_delay": {
+        "dashboard_id": [168, 168]
+    },
     "stats_pe_delay_main": {
         "dashboard_id": 168,
         "tally_popup_form_id": "3lb9XW",
@@ -259,6 +262,12 @@ def metabase_embedded_url(request=None, dashboard_id=None, params=None, with_tit
         metabase_dashboard = METABASE_DASHBOARDS.get(view_name)
         dashboard_id = metabase_dashboard["dashboard_id"] if metabase_dashboard else None
 
-    payload = {"resource": {"dashboard": dashboard_id}, "params": params, "exp": round(time.time()) + (10 * 60)}
-    is_titled = "true" if with_title else "false"
-    return settings.METABASE_SITE_URL + "/embed/dashboard/" + _get_token(payload) + f"#titled={is_titled}"
+    if not isinstance(dashboard_id, list):
+        dashboard_id = [dashboard_id]
+
+    def build_url(dashboard):
+        payload = {"resource": {"dashboard": dashboard}, "params": params, "exp": round(time.time()) + (10 * 60)}
+        is_titled = "true" if with_title else "false"
+        return settings.METABASE_SITE_URL + "/embed/dashboard/" + _get_token(payload) + f"#titled={is_titled}"
+
+    return [build_url(dashboard) for dashboard in dashboard_id]

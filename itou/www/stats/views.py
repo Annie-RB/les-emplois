@@ -17,6 +17,7 @@ make sure that the correct filters are "Verrouillé".
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -115,7 +116,7 @@ def render_stats(request, context, params=None, template_name="stats/stats.html"
         tally_embed_form_id = metabase_dashboard.get("tally_embed_form_id")
 
     base_context = {
-        "iframe_url": mb.metabase_embedded_url(request=request, params=params),
+        "iframes_url": mb.metabase_embedded_url(request=request, params=params),
         "stats_base_url": settings.METABASE_SITE_URL,
         "tally_popup_form_id": tally_popup_form_id,
         "tally_embed_form_id": tally_embed_form_id,
@@ -139,17 +140,20 @@ def render_stats(request, context, params=None, template_name="stats/stats.html"
         department = base_context.get("department")
         region = DEPARTMENT_TO_REGION[department] if department else base_context.get("region")
         dashboard_id = metabase_dashboard.get("dashboard_id")
-        StatsDashboardVisit.objects.create(
-            dashboard_id=dashboard_id,
-            dashboard_name=view_name,
-            department=department,
-            region=region,
-            current_company_id=company_id,
-            current_prescriber_organization_id=prescriber_org_pk,
-            current_institution_id=institution_pk,
-            user_kind=user_kind,
-            user_id=request.user.pk,
-        )
+        if not isinstance(dashboard_id, list):
+            dashboard_id = [dashboard_id]
+        for dashboard in dashboard_id:
+            StatsDashboardVisit.objects.create(
+                dashboard_id=dashboard,
+                dashboard_name=view_name,
+                department=department,
+                region=region,
+                current_company_id=company_id,
+                current_prescriber_organization_id=prescriber_org_pk,
+                current_institution_id=institution_pk,
+                user_kind=user_kind,
+                user_id=request.user.pk,
+            )
 
     return render(request, template_name, base_context)
 
@@ -176,7 +180,7 @@ def stats_pilotage(request, dashboard_id):
         raise PermissionDenied
 
     context = {
-        "iframe_url": mb.metabase_embedded_url(dashboard_id=dashboard_id, with_title=True),
+        "iframe_url": mb.metabase_embedded_url(dashboard_id=dashboard_id, with_title=True)[0],
     }
     return render_stats(request=request, context=context, template_name="stats/stats_pilotage.html")
 
@@ -357,6 +361,17 @@ def render_stats_pe(request, page_title, extra_params=None):
             "department": current_org.department,
         }
     return render_stats(request=request, context=context, params=params)
+
+
+@login_required
+def stats_pe_iae_delay(request):
+    return render_stats_pe(
+        request=request,
+        page_title="Délai d'entrée en IAE",
+        extra_params={
+            mb.JOB_APPLICATION_ORIGIN_FILTER_KEY: mb.PE_PRESCRIBER_FILTER_VALUE,
+        },
+    )
 
 
 @login_required

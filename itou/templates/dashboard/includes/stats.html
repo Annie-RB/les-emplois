@@ -110,6 +110,13 @@
                             <span>Voir les données du délai d'entrée en IAE</span>
                         </a>
                     </li>
+                    <li class="d-flex justify-content-between align-items-center mb-3">
+                        <a href="{% url 'stats:stats_pe_iae_delay' tab="year" %}" class="btn-link btn-ico">
+                            <i class="ri-bar-chart-line ri-lg font-weight-normal align-self-start"></i>
+                            <span>Voir toutes les données du délai d'entrée en IAE</span>
+                        </a>
+                        {% include "dashboard/includes/stats_new_badge.html" %}
+                    </li>
                 {% endif %}
                 {% if can_view_stats_ddets_iae %}
                     <li class="d-flex justify-content-between align-items-center mb-3">

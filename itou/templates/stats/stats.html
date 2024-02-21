@@ -29,8 +29,24 @@
             <div class="row">
                 <div class="col-12">
                     <script src="{{ stats_base_url }}/app/iframeResizer.js"></script>
-                    <iframe id="stats-iframe" src="{{ iframe_url }}">
-                    </iframe>
+                    {% if iframes_url|length == 1 %}
+                    <iframe id="stats-iframe" src="{{ iframes_url.0 }}"></iframe>
+                    {% elif iframes_url|length > 1 %}
+                        <ul class="nav nav-tabs" role="tablist">
+                            {% for _ in iframes_url %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {{ forloop.first|yesno:"active," }}" id="tb{{ forloop.counter }}-tab" data-bs-toggle="tab" data-bs-target="#tb{{ forloop.counter }}" type="button" role="tab" aria-selected="true">TB {{ forloop.counter }}</button>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <div class="tab-content">
+                            {% for iframe_url in iframes_url %}
+                            <div class="tab-pane fade {{ forloop.first|yesno:"show active," }}" id="tb{{ forloop.counter }}" role="tabpanel" aria-labelledby="tb{{ forloop.counter }}-tab">
+                                <iframe id="stats-iframe" src="{{ iframe_url }}"></iframe>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
 
                     {% if back_url %}
                         <p class="mt-4">
