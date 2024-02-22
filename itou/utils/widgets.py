@@ -133,6 +133,17 @@ class AddressAutocompleteWidget(RemoteAutocompleteSelect2Widget):
     # "geocoding_score",
     # "ban_api_resolved_address",
 
+    def __init__(self, *args, one_choice_selected=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Build the choices by hand
+        if one_choice_selected is not None:
+            choices = [(0, one_choice_selected)]
+            self.choices = choices
+
+        if choices:
+            self.initial = 0
+
     class Media:
         js = ["js/address_autocomplete_fields.js"]
 

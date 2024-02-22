@@ -62,31 +62,30 @@ class JobSeekerAddressForm(forms.ModelForm):
             self.fields[field_name].widget.attrs["class"] = f"js-{field_name.replace('_', '-')}"
             self.fields[field_name].required = False
 
-        choices = []
         address_choice = None
 
+        # The following code is required as we are using a non Select2 version not tied to a model
+        # in order to perform Ajax calls, but we need need to mimick the behavior of a model field
         if kwargs["data"] and "ban_api_resolved_address" in kwargs["data"]:
-            # The user did a select2 choice, we should refill the choosen address if there was a form error
+            # The ban_api_resolved_address field is populated using javascript (after selecting an address).
+            # So if it present in the submitted data, it means that the user did a select2 choice
+            # so we should refill and populate in the select2 field the choosen address if there was a form error
             address_choice = kwargs["data"]["ban_api_resolved_address"]
-
-        if self.instance and address_choice is None:
+        elif self.instance:
+            # If there is no ban_api_resolvedaddress_field, let's fill the form with the geocoding_address saved
+            # on the job_seeker profile
             job_seeker = self.instance
             if job_seeker.address_line_1:
                 address_choice = job_seeker.geocoding_address
-
-        if address_choice is not None:
-            choices = [(0, address_choice)]
 
         self.fields["address_for_autocomplete"] = forms.CharField(
             label="Adresse",
             required=True,
             widget=AddressAutocompleteWidget(
-                choices=choices,
+                # The user did a select2 choice, we should refill the choosen address if there was a form error
+                one_choice_selected=address_choice,
             ),
         )
-
-        if choices:
-            self.initial["address_for_autocomplete"] = 0
 
     class Meta:
         model = User
