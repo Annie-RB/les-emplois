@@ -14,7 +14,7 @@ from itou.users.enums import IdentityProvider
 from itou.users.forms import JobSeekerProfileFieldsMixin
 from itou.users.models import JobSeekerProfile, User
 from itou.utils import constants as global_constants
-from itou.utils.widgets import AddressAutocompleteWidget, DuetDatePickerWidget
+from itou.utils.widgets import DuetDatePickerWidget, JobSeakerAddressAutocompleteWidget
 
 
 class SSOReadonlyMixin:
@@ -62,29 +62,11 @@ class JobSeekerAddressForm(forms.ModelForm):
             self.fields[field_name].widget.attrs["class"] = f"js-{field_name.replace('_', '-')}"
             self.fields[field_name].required = False
 
-        address_choice = None
-
-        # The following code is required as we are using a non Select2 version not tied to a model
-        # in order to perform Ajax calls, but we need need to mimick the behavior of a model field
-        if kwargs["data"] and "ban_api_resolved_address" in kwargs["data"]:
-            # The ban_api_resolved_address field is populated using javascript (after selecting an address).
-            # So if it present in the submitted data, it means that the user did a select2 choice
-            # so we should refill and populate in the select2 field the choosen address if there was a form error
-            address_choice = kwargs["data"]["ban_api_resolved_address"]
-        elif self.instance:
-            # If there is no ban_api_resolvedaddress_field, let's fill the form with the geocoding_address saved
-            # on the job_seeker profile
-            job_seeker = self.instance
-            if job_seeker.address_line_1:
-                address_choice = job_seeker.geocoding_address
-
         self.fields["address_for_autocomplete"] = forms.CharField(
             label="Adresse",
             required=True,
-            widget=AddressAutocompleteWidget(
-                # The user did a select2 choice, we should refill the choosen address if there was a form error
-                one_choice_selected=address_choice,
-            ),
+            widget=JobSeakerAddressAutocompleteWidget(submitted_data=kwargs["data"], job_seeker=self.instance),
+            initial=0,
         )
 
     class Meta:
