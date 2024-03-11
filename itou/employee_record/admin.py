@@ -20,12 +20,18 @@ class EmployeeRecordUpdateNotificationInline(ItouTabularInline):
         "asp_batch_line_number",
     )
 
-    readonly_fields = fields
     fk_name = "employee_record"
 
-    can_delete = False
     show_change_link = True
-    extra = 0
+
+    def has_add_permission(self, request, obj):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class EmployeeRecordAdminForm(forms.ModelForm):
@@ -187,20 +193,6 @@ class EmployeeRecordUpdateNotificationAdmin(ItouModelAdmin):
 
     list_filter = ("status",)
 
-    raw_id_fields = ("employee_record",)
-
-    readonly_fields = (
-        "pk",
-        "employee_record",
-        "created_at",
-        "updated_at",
-        "asp_batch_file",
-        "asp_batch_line_number",
-        "asp_processing_code",
-        "asp_processing_label",
-        "archived_json",
-    )
-
     search_fields = [
         "employee_record__siret",
         "employee_record__approval_number",
@@ -233,3 +225,12 @@ class EmployeeRecordUpdateNotificationAdmin(ItouModelAdmin):
             },
         ),
     )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
