@@ -82,7 +82,11 @@ urlpatterns = [
     path("legal/privacy/", TemplateView.as_view(template_name="static/legal/privacy.html"), name="legal-privacy"),
     path("legal/terms/", TemplateView.as_view(template_name="static/legal/terms.html"), name="legal-terms"),
     path("", include("itou.www.security.urls")),
+    # emplois premium XP
+    path("premium/", include("itou.premium.urls")),
+    path("django_plotly_dash/", include("django_plotly_dash.urls")),
 ]
+
 
 if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
     import debug_toolbar

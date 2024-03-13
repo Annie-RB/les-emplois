@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "hijack",
     "hijack.contrib.admin",
     "pgtrigger",
+    "django_plotly_dash.apps.DjangoPlotlyDashConfig",
     # Register adapters before to load allauth apps.
     "itou.allauth_adapters",
     "allauth",
@@ -131,6 +132,8 @@ MIDDLEWARE = [
     "itou.www.middleware.never_cache",
     # Final logger
     "django_datadog_logger.middleware.request_log.RequestLoggingMiddleware",
+    # Django Plotly Dash
+    "django_plotly_dash.middleware.BaseMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -256,7 +259,7 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 7
 
 SESSION_SERIALIZER = "itou.utils.session.JSONSerializer"
 
-X_FRAME_OPTIONS = "DENY"
+X_FRAME_OPTIONS = "SAMEORIGIN"  # emplois premium XP with dash
 
 
 LOGGING = {
@@ -570,6 +573,7 @@ MATOMO_AUTH_TOKEN = os.getenv("MATOMO_AUTH_TOKEN")
 CSP_BASE_URI = ["'none'"]  # We don't use any <base> element in our code, so let's forbid it
 CSP_DEFAULT_SRC = ["'self'"]
 CSP_FRAME_SRC = [
+    "'self'",
     "https://app.livestorm.co",  # Upcoming events from the homepage
     "*.hotjar.com",
     # For stats/pilotage views
@@ -582,6 +586,7 @@ CSP_FRAME_SRC = [
     "data:",  # For downloading Metabase questions as PNG on Firefox etc
 ]
 CSP_FRAME_ANCESTORS = [
+    "http://127.0.0.1:8000",
     "https://pilotage.inclusion.beta.gouv.fr",
 ]
 CSP_IMG_SRC = [
@@ -608,6 +613,15 @@ CSP_SCRIPT_SRC = [
     "https://stats.inclusion.beta.gouv.fr",
     "*.hotjar.com",
     "https://tally.so",
+    "https://unpkg.com/@babel/polyfill@7.12.1/dist/polyfill.min.js",
+    "https://unpkg.com/prop-types@15.8.1/prop-types.min.js",
+    "https://unpkg.com/react-dom@16.14.0/umd/react-dom.production.min.js",
+    "https://unpkg.com/react@16.14.0/umd/react.production.min.js",
+    "https://unpkg.com/dash-html-components@2.0.11/dash_html_components/dash_html_components.min.js",
+    "https://unpkg.com/dash-core-components@2.9.2/dash_core_components/dash_core_components-shared.js",
+    "https://unpkg.com/dash-core-components@2.9.2/dash_core_components/dash_core_components.js",
+    "https://unpkg.com/dash-renderer@1.15.1/build/dash_renderer.min.js",
+    "https://unpkg.com/dash-table@5.2.4/dash_table/bundle.js",
 ]
 # Some browsers don't seem to fallback on script-src if script-src-elem is not there
 # But some other don't support script-src-elem... just copy one into the other

@@ -1,0 +1,15 @@
+{% extends "layout/base.html" %}
+{% load plotly_dash %}
+
+{% block title %}Demo One - Simple Embedding{% endblock %}
+
+{% block content %}
+    <h1>Simple App Embedding</h1>
+
+    <div class="card border-dark">
+        <div class="card-body">
+            <div class="{% plotly_class name="SimpleExample" %}">{% plotly_app name="SimpleExample" %}</div>
+        </div>
+    </div>
+    <p></p>
+{% endblock %}
