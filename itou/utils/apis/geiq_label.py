@@ -47,7 +47,7 @@ class LabelApiClient:
         assert siret.isdigit(), siret
         return self._command(LabelCommand.GeiqFFGeiq, where=f"geiq.siret,=,{siret}")
 
-    def get_all_geiq(self, *, page_size=25):
+    def get_all_geiq(self, *, page_size=50):
         data = []
         p = 1
         while new_values := self._command(LabelCommand.GeiqFFGeiq, n=page_size, p=p):
