@@ -55,6 +55,16 @@ class LabelApiClient:
             p += 1
         return data
 
+    def get_all_contracts(self, geiq_id, *, page_size=50):
+        data = []
+        p = 1
+        while new_values := self._command(
+            LabelCommand.SalarieContrat, join="salariecontrat.salarie,s", where=f"s.geiq,=,{geiq_id}", p=p
+        ):
+            data.extend(new_values)
+            p += 1
+        return data
+
 
 def get_client():
     return LabelApiClient(
