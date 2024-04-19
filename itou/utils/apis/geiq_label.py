@@ -59,7 +59,7 @@ class LabelApiClient:
         data = []
         p = 1
         while new_values := self._command(
-            LabelCommand.SalarieContrat, join="salariecontrat.salarie,s", where=f"s.geiq,=,{geiq_id}", p=p
+            LabelCommand.SalarieContrat, join="salariecontrat.salarie,s", where=f"s.geiq,=,{geiq_id}", n=page_size, p=p
         ):
             data.extend(new_values)
             p += 1
