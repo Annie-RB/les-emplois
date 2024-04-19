@@ -9,7 +9,7 @@ from . import models
 def convert_ms_timestamp_to_datetime(nb_ms):
     if not nb_ms:
         return None
-    return datetime.datetime.fromtimestamp(nb_ms / 1000)
+    return datetime.datetime.fromtimestamp(nb_ms / 1000, tz=datetime.timezone.utc)
 
 
 GEIQ_MAPPING = {
