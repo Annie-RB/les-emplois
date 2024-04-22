@@ -28,14 +28,17 @@ GEIQ_MAPPING = {
 }
 
 
-def label_data_to_geiq(data):
-    geiq_data = {}
-    other_data = dict(data)
-    for db_key, label_key in GEIQ_MAPPING.items():
-        geiq_data[db_key] = data[label_key]
-        other_data.pop(label_key)
-    geiq_data["other_data"] = other_data
-    return models.GEIQLabelInfo(**geiq_data)
+def label_data_to_django(data, *, mapping, model, with_other_data=False):
+    model_data = {}
+    if with_other_data:
+        other_data = dict(data)
+    for db_key, label_key in mapping.items():
+        model_data[db_key] = data[label_key]
+        if with_other_data:
+            other_data.pop(label_key)
+    if with_other_data:
+        model_data["other_data"] = other_data
+    return model(**model_data)
 
 
 ANTENNA_MAPPING = {
@@ -53,13 +56,6 @@ ANTENNA_MAPPING = {
 }
 
 
-def label_data_to_antenna(data):
-    antenna_data = {}
-    for db_key, label_key in ANTENNA_MAPPING.items():
-        antenna_data[db_key] = data[label_key]
-    return models.GEIQAntenna(**antenna_data)
-
-
 def normalize_null_values(value):
     if value is None:
         return ""
@@ -68,9 +64,8 @@ def normalize_null_values(value):
 
 def sync_geiqs_and_antennas():
     client = geiq_label.get_client()
-
     geiq_infos = client.get_all_geiq()
-    print("All data downloaded")
+
     antenna_infos = []
     for geiq_info in geiq_infos:
         for key in (
@@ -106,7 +101,9 @@ def sync_geiqs_and_antennas():
         [(col_key, db_key) for db_key, col_key in GEIQ_MAPPING.items()],
     ):
         if item.kind in [DiffItemKind.ADDITION, DiffItemKind.EDITION]:
-            geiq = label_data_to_geiq(item.raw)
+            geiq = label_data_to_django(
+                item.raw, mapping=GEIQ_MAPPING, model=models.GEIQLabelInfo, with_other_data=True
+            )
             if item.kind == DiffItemKind.ADDITION:
                 geiqs_to_create.append(geiq)
             else:
@@ -136,7 +133,7 @@ def sync_geiqs_and_antennas():
         [(col_key, db_key) for db_key, col_key in ANTENNA_MAPPING.items()],
     ):
         if item.kind in [DiffItemKind.ADDITION, DiffItemKind.EDITION]:
-            antenna = label_data_to_antenna(item.raw)
+            antenna = label_data_to_django(item.raw, mapping=ANTENNA_MAPPING, model=models.GEIQAntenna)
             if item.kind == DiffItemKind.ADDITION:
                 antennas_to_create.append(antenna)
             else:
@@ -155,6 +152,7 @@ def sync_geiqs_and_antennas():
     )
 
 
+# Employee's other_data example:
 # 'numero': '123',
 # 'prescripteur': {'id': 13, 'libelle': 'Autres', 'libelle_abr': 'AUTRE'},
 # 'prescripteur_autre': '1 Autres',
@@ -191,20 +189,75 @@ EMPLOYEE_MAPPING = {
 }
 
 
-def label_data_to_employee(data):
-    employee_data = {}
-    other_data = dict(data)
-    for db_key, label_key in EMPLOYEE_MAPPING.items():
-        employee_data[db_key] = data[label_key]
-        other_data.pop(label_key)
-    employee_data["other_data"] = other_data
-    return models.Employee(**employee_data)
+# EmployeeContract's other_data example:
+# "date_debut": "2023-01-23T00:00:00+0100",
+# "date_fin": "2023-11-26T00:00:00+0100",
+# "heures_formation_prevue": None,
+# "organisme_formation": "CENTRE RAYMOND BARD MIGRATION",
+# "metier_prepare": "REGLEUR D ENROBES",
+# "formation_complementaire_prevue": "",
+# "is_multi_mad": False,
+# "mad_nb_entreprises": None,
+# "tarif_mad": 20.2,
+# "is_remuneration_superieur_minima": False,
+# "is_temps_plein": True,
+# "state": 2,
+# "date_fin_contrat": "2023-11-26T00:00:00+0100",
+# "rupture": None,
+# "is_present_in_examen": True,
+# "is_qualification_obtenue": True,
+# "metier_correspondant": "régleur d'enrobé",
+# "formation_complementaire": "",
+# "heures_formation_realisee": 462,
+# "nature_contrat": {
+#     "id": 1,
+#     "libelle": "Contrat de professionnalisation",
+#     "libelle_abr": "CPRO",
+#     "groupe": "1",
+#     "precision": False,
+#     "formation": True,
+# },
+# "nature_contrat_precision": [],
+# "nature_contrat_autre_precision": "",
+# "secteur_activite": {"id": 11, "nom": "Non-concerné", "code": "NC"},
+# "qualification_visee": {"id": 1, "libelle": "Non concerné", "libelle_abr": "NC"},
+# "type_qualification_visee": {"id": 3, "libelle": "Positionnement de CCN", "libelle_abr": "CCN"},
+# "type_qualification_obtenu": {"id": 3, "libelle": "Positionnement de CCN", "libelle_abr": "CCN"},
+# "qualification_obtenu": [],
+# "mode_validation": {"id": 1, "libelle": "Jury interne", "libelle_abr": "INTERNE"},
+# "emploi_sorti": {"id": 1, "libelle": "Dans une entreprise adhérente", "libelle_abr": "ADH"},
+# "emploi_sorti_precision": {"id": 1, "libelle": "CDI", "libelle_abr": "CDI"},
+# "mise_en_situation_professionnelle_bool": False,
+# "mise_en_situation_professionnelle_precision": "",
+# "mise_en_situation_professionnelle": False,
+# "emploi_sorti_precision_text": None,
+# "signer_cadre_clause_insertion": False,
+# "is_contrat_pro_experimental": True,
+# "is_contrat_pro_associe_vae_inversee": False,
+# "nb_heure_hebdo": None,
+# "libre_cc_vise": "N1P2C170",
+# "contrat_opco": "",
+# "accompagnement_avant_contrat": None,
+# "accompagnement_apres_contrat": None,
+# "hors_alternance_precision": "",
+# "modalite_formation": {"id": 2, "libelle": "Formation interne", "libelle_abr": "INTERNE"},
+# "heures_accompagnement_vae_prevue": None,
+# "heures_suivi_evaluation_competences_geiq_prevues": None,
+# "code_rncp": "",
+# "type_validation": {"id": 1, "libelle": "Totale", "libelle_abr": "TOTALE"},
+# "is_refus_cdd_cdi": False,
+
+CONTRACT_MAPPING = {
+    "label_id": "id",
+    "antenna_id": "antenne",
+    "employee_id": "salarie",
+}
 
 
 def sync_employee_and_contracts(geiq_id):
     client = geiq_label.get_client()
-
     contract_infos = client.get_all_contracts(geiq_id)
+
     employee_infos = {}
     for contract_info in contract_infos:
         employee_info = contract_info["salarie"]
@@ -227,12 +280,12 @@ def sync_employee_and_contracts(geiq_id):
         else:
             employee_infos[employee_info["id"]] = employee_info
         contract_info["salarie"] = employee_info["id"]
+        # If the contract is directly with the GEIQ, the antenne id is 0
+        contract_info["antenne"] = contract_info["antenne"]["id"] or None
 
     employees_to_create = []
     employees_to_update = []
     employees_to_delete = []
-
-    print(len(employee_infos), "employees")
 
     for item in yield_sync_diff(
         employee_infos.values(),
@@ -242,7 +295,9 @@ def sync_employee_and_contracts(geiq_id):
         [(col_key, db_key) for db_key, col_key in EMPLOYEE_MAPPING.items()],
     ):
         if item.kind in [DiffItemKind.ADDITION, DiffItemKind.EDITION]:
-            employee = label_data_to_employee(item.raw)
+            employee = label_data_to_django(
+                item.raw, mapping=EMPLOYEE_MAPPING, model=models.Employee, with_other_data=True
+            )
             if item.kind == DiffItemKind.ADDITION:
                 employees_to_create.append(employee)
             else:
@@ -258,4 +313,36 @@ def sync_employee_and_contracts(geiq_id):
     models.Employee.objects.bulk_create(employees_to_create)
     models.Employee.objects.bulk_update(
         employees_to_update, {db_key for db_key in EMPLOYEE_MAPPING if db_key != "label_id"}
+    )
+
+    contracts_to_create = []
+    contracts_to_update = []
+    contracts_to_delete = []
+
+    for item in yield_sync_diff(
+        contract_infos,
+        "id",
+        models.EmployeeContract.objects.all(),
+        "label_id",
+        [(col_key, db_key) for db_key, col_key in CONTRACT_MAPPING.items()],
+    ):
+        if item.kind in [DiffItemKind.ADDITION, DiffItemKind.EDITION]:
+            employee = label_data_to_django(
+                item.raw, mapping=CONTRACT_MAPPING, model=models.EmployeeContract, with_other_data=True
+            )
+            if item.kind == DiffItemKind.ADDITION:
+                contracts_to_create.append(employee)
+            else:
+                employee.pk = item.db_obj.pk
+                contracts_to_update.append(employee)
+                print(item)
+        elif item.kind == DiffItemKind.DELETION:
+            contracts_to_delete.add(item.key)
+
+    print(f"Would create {len(contracts_to_create)}")
+    print(f"Would update {len(contracts_to_update)}")
+    print(f"Would delete {len(contracts_to_delete)}")
+    models.EmployeeContract.objects.bulk_create(contracts_to_create)
+    models.EmployeeContract.objects.bulk_update(
+        contracts_to_update, {db_key for db_key in CONTRACT_MAPPING if db_key != "label_id"}
     )
