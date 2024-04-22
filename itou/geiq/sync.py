@@ -16,7 +16,7 @@ def convert_ms_timestamp_to_datetime(nb_ms):
 GEIQ_MAPPING = {
     "label_id": "id",
     "name": "nom",
-    "created_at": lambda data: convert_ms_timestamp_to_datetime(data["date_creation"]),
+    "created_at": "date_creation",
     "siret": "siret",
     "address_line_1": "adresse",
     "address_line_2": "adresse2",
@@ -32,12 +32,8 @@ def label_data_to_geiq(data):
     geiq_data = {}
     other_data = dict(data)
     for db_key, label_key in GEIQ_MAPPING.items():
-        if db_key == "created_at":
-            geiq_data[db_key] = label_key(data)
-            other_data.pop("date_creation")
-        else:
-            geiq_data[db_key] = data[label_key]
-            other_data.pop(label_key)
+        geiq_data[db_key] = data[label_key]
+        other_data.pop(label_key)
     geiq_data["other_data"] = other_data
     return models.GEIQLabelInfo(**geiq_data)
 
@@ -46,7 +42,7 @@ ANTENNA_MAPPING = {
     "label_id": "id",
     "geiq_id": "geiq_id",
     "name": "nom",
-    "created_at": lambda data: convert_ms_timestamp_to_datetime(data["date_creation"]),
+    "created_at": "date_creation",
     "siret": "siret",
     "address_line_1": "adresse",
     "address_line_2": "adresse2",
@@ -60,10 +56,7 @@ ANTENNA_MAPPING = {
 def label_data_to_antenna(data):
     antenna_data = {}
     for db_key, label_key in ANTENNA_MAPPING.items():
-        if db_key == "created_at":
-            antenna_data[db_key] = label_key(data)
-        else:
-            antenna_data[db_key] = data[label_key]
+        antenna_data[db_key] = data[label_key]
     return models.GEIQAntenna(**antenna_data)
 
 
@@ -87,6 +80,7 @@ def sync_geiqs_and_antennas():
             "adresse2",
         ):
             geiq_info[key] = normalize_null_values(geiq_info[key])
+        geiq_info["date_creation"] = convert_ms_timestamp_to_datetime(geiq_info["date_creation"])
         antenne_infos = geiq_info.pop("antennes")
         for antenne_info in antenne_infos:
             assert antenne_info["geiq_id"] == geiq_info["id"], antenne_info
@@ -97,6 +91,7 @@ def sync_geiqs_and_antennas():
                 "adresse2",
             ):
                 antenne_info[key] = normalize_null_values(antenne_info[key])
+            antenne_info["date_creation"] = convert_ms_timestamp_to_datetime(antenne_info["date_creation"])
         antenna_infos.extend(antenne_infos)
 
     geiqs_to_create = []
@@ -189,9 +184,10 @@ EMPLOYEE_MAPPING = {
     "address_line_2": "adresse_ligne_2",
     "post_code": "adresse_code_postal",
     "city": "adresse_ville",
-    "created_at": lambda data: datetime.datetime.fromisoformat(data["date_creation"]),
-    "title": lambda data: {"H": Title.M, "F": Title.MME}[data["sexe"]],
-    "birthdate": lambda data: datetime.date.fromisoformat(data["date_naissance"][:10]),
+    "created_at": "date_creation",
+    "title": "sexe",
+    "birthdate": "date_naissance",
+    "qualification": "qualification",
 }
 
 
@@ -199,12 +195,8 @@ def label_data_to_employee(data):
     employee_data = {}
     other_data = dict(data)
     for db_key, label_key in EMPLOYEE_MAPPING.items():
-        if db_key in ("created_at", "birthdate", "title"):
-            employee_data[db_key] = label_key(data)
-            other_data.pop({"created_at": "date_creation", "title": "sexe", "birthdate": "date_naissance"}[db_key])
-        else:
-            employee_data[db_key] = data[label_key]
-            other_data.pop(label_key)
+        employee_data[db_key] = data[label_key]
+        other_data.pop(label_key)
     employee_data["other_data"] = other_data
     return models.Employee(**employee_data)
 
@@ -223,6 +215,10 @@ def sync_employee_and_contracts(geiq_id):
             "adresse_ville",
         ):
             employee_info[key] = normalize_null_values(employee_info[key])
+        employee_info["date_creation"] = datetime.datetime.fromisoformat(employee_info["date_creation"])
+        employee_info["date_naissance"] = datetime.date.fromisoformat(employee_info["date_naissance"][:10])
+        employee_info["sexe"] = {"H": Title.M, "F": Title.MME}[employee_info["sexe"]]
+        employee_info["qualification"] = employee_info["qualification"]["libelle_abr"]
         if employee_info["id"] in employee_infos:
             # Check consistency between contracts
             assert (
