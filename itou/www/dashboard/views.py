@@ -94,6 +94,7 @@ def _employer_dashboard_context(request):
             EmployeeRecord.objects.for_company(current_org).filter(status=Status.REJECTED).count()
         ),
         "show_eiti_webinar_banner": show_eiti_webinar_banner,
+        "show_geiq_execution_assessment": current_org.kind == CompanyKind.GEIQ,
         "siae_suspension_text_with_dates": (
             current_org.get_active_suspension_text_with_dates()
             # Otherwise they cannot be suspended

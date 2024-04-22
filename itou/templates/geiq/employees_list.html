@@ -1,0 +1,106 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load format_filters %}
+{% load str_filters %}
+{% load list_filters %}
+{% load django_bootstrap5 %}
+
+{% block title %}Mes salariés - {{ request.current_organization.display_name }} {{ block.super }}{% endblock %}
+
+{% block content_title %}
+    <h1>Mes salariés - {{ request.current_organization.display_name }}</h1>
+    <h2>Dernière mise à jour: pas encore ajouté</h2>
+{% endblock %}
+
+{% block content %}
+    <section class="s-section">
+        <div class="s-section__container container">
+            <div class="row">
+                <div class="col-12 col-lg-8">
+                    <div class="c-box">
+                        <h3>Indicateurs clés sur les publics prioritaires</h3>
+                        <div class="row">
+                            <div class="col">Nombre de personnes accompagnées</div>
+                            <div class="col text-end fw-bold">39</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Nombre de personnes accompagnées sur une durée >3 mois sur l’année</div>
+                            <div class="col text-end fw-bold">35</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Nombre de salariés éligibles à l’aide</div>
+                            <div class="col text-end fw-bold">35</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Nombre potentiel d’aides à 814 €</div>
+                            <div class="col text-end fw-bold">10</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Nombre potentiel d’aides à 1 400 €</div>
+                            <div class="col text-end fw-bold">25</div>
+                        </div>
+                        <div class="row">
+                            <div class="col">Montant potentiel de l’aide à l’accompagnement</div>
+                            <div class="col text-end fw-bold">18 400€</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row my-3 my-md-5">
+                <div class="col-12">
+                    <div class="c-box p-3 p-md-4 d-flex align-items-center">
+                        <div class="p-0 flex-grow-1 h5 m-0">Vous ne trouvez pas la fiche salarié d’un de vos salariés ?</div>
+                        <a class="btn btn-primary" href="{% url "employee_record_views:add" %}">Créer une fiche salarié</a>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-md-8">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            {% with navigation_pages.paginator.count as counter %}
+                                <h3 class="h4 m-0">{{ counter }} résultat{{ counter|pluralizefr }}</h3>
+                            {% endwith %}
+                        </div>
+                        <div>
+                            <span class="fs-sm">Trier par :</span>
+                            <button type="button" class="btn btn-sm btn-link dropdown-toggle p-0" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                {{ ordered_by_label }}
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end" id="order-form-group">
+                                {% for order_value, order_label in form.order.field.choices %}
+                                    <button class="dropdown-item {% if order_value == form.order.value %}active{% endif %}" type="button" value="{{ order_value }}">
+                                        {{ order_label }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {# "Real" employee records objects #}
+                    <div class="employee-records-list">
+                        {% if employee_records_list %}
+                            {% for employee_record in navigation_pages %}
+                                {% include "employee_record/includes/list_item.html" with employee_record=employee_record item=employee_record.job_application only %}
+                            {% endfor %}
+                            {# New employee records i.e. job applications #}
+                        {% else %}
+                            {% for job_application in navigation_pages %}
+                                {% include "employee_record/includes/list_item.html" with employee_record=None item=job_application only %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    {% if not navigation_pages %}
+                        <div class="c-box c-box--results my-3 my-md-4">
+                            <div class="c-box--results__body">
+                                <p class="mb-0">Aucune fiche salarié avec le statut selectionné.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% include "includes/pagination.html" with page=navigation_pages %}
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
