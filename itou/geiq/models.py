@@ -61,7 +61,7 @@ class Employee(GEIQAddressMixin, models.Model):
     created_at = models.DateTimeField("date de création", null=True)
     last_name = models.CharField(verbose_name="nom de famille")
     first_name = models.CharField(verbose_name="prénom")
-    birth_date = models.DateField(verbose_name="date de naissance")
+    birthdate = models.DateField(verbose_name="date de naissance")
     title = models.CharField(
         max_length=3,
         verbose_name="civilité",

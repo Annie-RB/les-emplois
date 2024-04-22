@@ -1,5 +1,6 @@
 import datetime
 
+from itou.users.enums import Title
 from itou.utils.apis import geiq_label
 from itou.utils.sync import DiffItemKind, yield_sync_diff
 
@@ -159,10 +160,7 @@ def sync_geiqs_and_antennas():
     )
 
 
-# 'date_creation': '2017-03-21T00:00:00+0100',
 # 'numero': '123',
-# 'date_naissance': '1970-01-01T00:00:00+0100',
-# 'sexe': 'H',
 # 'prescripteur': {'id': 13, 'libelle': 'Autres', 'libelle_abr': 'AUTRE'},
 # 'prescripteur_autre': '1 Autres',
 # 'qualification': {'id': 1,
@@ -191,17 +189,23 @@ EMPLOYEE_MAPPING = {
     "address_line_2": "adresse_ligne_2",
     "post_code": "adresse_code_postal",
     "city": "adresse_ville",
-    "created_at": lambda data: convert_ms_timestamp_to_datetime(data["date_creation"]),
+    "created_at": lambda data: datetime.datetime.fromisoformat(data["date_creation"]),
+    "title": lambda data: {"H": Title.M, "F": Title.MME}[data["sexe"]],
+    "birthdate": lambda data: datetime.date.fromisoformat(data["date_naissance"][:10]),
 }
 
 
 def label_data_to_employee(data):
     employee_data = {}
-    for db_key, label_key in ANTENNA_MAPPING.items():
-        if db_key == "created_at":
+    other_data = dict(data)
+    for db_key, label_key in EMPLOYEE_MAPPING.items():
+        if db_key in ("created_at", "birthdate", "title"):
             employee_data[db_key] = label_key(data)
+            other_data.pop({"created_at": "date_creation", "title": "sexe", "birthdate": "date_naissance"}[db_key])
         else:
             employee_data[db_key] = data[label_key]
+            other_data.pop(label_key)
+    employee_data["other_data"] = other_data
     return models.Employee(**employee_data)
 
 
@@ -211,25 +215,28 @@ def sync_employee_and_contracts(geiq_id):
     contract_infos = client.get_all_contracts(geiq_id)
     employee_infos = {}
     for contract_info in contract_infos:
-        for key in (
-            "siret",
-            "telephone",
-            "email",
-            "adresse2",
-        ):
-            contract_info[key] = normalize_null_values(contract_info[key])
         employee_info = contract_info["salarie"]
+        for key in (
+            "adresse_ligne_1",
+            "adresse_ligne_2",
+            "adresse_code_postal",
+            "adresse_ville",
+        ):
+            employee_info[key] = normalize_null_values(employee_info[key])
         if employee_info["id"] in employee_infos:
             # Check consistency between contracts
-            assert employee_infos[employee_info["id"]] == employee_info
+            assert (
+                employee_infos[employee_info["id"]] == employee_info
+            ), f"{employee_info} != {employee_infos[employee_info['id']]}"
         else:
             employee_infos[employee_info["id"]] = employee_info
-        employee_info["salarie"] = employee_info["id"]
-        contract_infos.extend(contract_infos)
+        contract_info["salarie"] = employee_info["id"]
 
     employees_to_create = []
     employees_to_update = []
     employees_to_delete = []
+
+    print(len(employee_infos), "employees")
 
     for item in yield_sync_diff(
         employee_infos.values(),
@@ -239,12 +246,12 @@ def sync_employee_and_contracts(geiq_id):
         [(col_key, db_key) for db_key, col_key in EMPLOYEE_MAPPING.items()],
     ):
         if item.kind in [DiffItemKind.ADDITION, DiffItemKind.EDITION]:
-            geiq = label_data_to_geiq(item.raw)
+            employee = label_data_to_employee(item.raw)
             if item.kind == DiffItemKind.ADDITION:
-                employees_to_create.append(geiq)
+                employees_to_create.append(employee)
             else:
-                geiq.pk = item.db_obj.pk
-                employees_to_update.append(geiq)
+                employee.pk = item.db_obj.pk
+                employees_to_update.append(employee)
                 print(item)
         elif item.kind == DiffItemKind.DELETION:
             employees_to_delete.add(item.key)
