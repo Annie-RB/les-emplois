@@ -6,19 +6,19 @@
             <span class="h4 m-0">Bilan d´exécution & salariés</span>
         </div>
         <div class="px-3 px-lg-4">
-            <a href="{% url 'geiq:employees' geiq_pk=request.current_organization.pk %}" class="btn btn-outline-primary btn-block btn-ico mb-2">
+            <a href="{% url 'geiq:assessment_info' geiq_pk=request.current_organization.pk %}" class="btn btn-outline-primary btn-block btn-ico mb-2">
                 <i class="ri-file-chart-line ri-lg font-weight-normal"></i>
                 <span>Le bilan d'exécution</span>
             </a>
             <ul class="list-unstyled mb-lg-5">
                 <li class="d-flex justify-content-between align-items-center mb-3">
-                    <a href="{% url 'geiq:employees' geiq_pk=request.current_organization.pk %}" class="btn-link btn-ico">
+                    <a href="{% url 'geiq:employee_list' geiq_pk=request.current_organization.pk info_type="personal-information" %}" class="btn-link btn-ico">
                         <i class="ri-group-line ri-lg font-weight-normal align-self-start"></i>
                         <span>Mes salariés</span>
                     </a>
                 </li>
                 <li class="d-flex justify-content-between align-items-center mb-3">
-                    <a href="{% url 'geiq:employees' geiq_pk=request.current_organization.pk %}" class="btn-link btn-ico">
+                    <a href="" class="btn-link btn-ico">
                         <i class="ri-download-2-line ri-lg font-weight-normal align-self-start"></i>
                         <span>Exporter les données du bilan d´exécution</span>
                     </a>

@@ -1,6 +1,22 @@
 from django.db import models
 
+from itou.companies.models import Company
 from itou.users.enums import Title
+
+
+class ContractType(models.TextChoices):
+
+    CPRO = "CPRO", "Contrat de professionnalisation"
+    CAPP = "CAPP", "Contrat d'apprentissage"
+    CUI_F = "CUI+F", "CUI (toute catégorie)"
+    CDD_CPF = "CDD+CPF", "CDD - CPF"
+    CDD_AUTRE = "CDD+autre", "CDD - Autre"
+    AUTRE_F = "Autre F", "Autre (avec formation)"
+
+    CUI = "CUI", "CUI (toute catégorie)"
+    CDD = "CDD", "CDD"
+    CDI = "CDI", "CDI"
+    AUTRE_SF = "Autre SF", "Autre (sans formation)"
 
 
 class Qualification(models.TextChoices):
@@ -9,6 +25,22 @@ class Qualification(models.TextChoices):
     N3 = "N3", "Niveau 3 (CAP, BEP)"
     N4 = "N4", "Niveau 4 (BP, Bac Général, Techno ou Pro, BT)"
     N5 = "N5", "Niveau 5 ou + (Bac+2 ou +)"
+
+
+class PrequalificationAction(models.TextChoices):
+
+    AFPR = "AFPR", "AFPR"
+    DISPOSITIF = "DISPOSITIF", "Dispositif régional ou sectoriel"
+    POE = "POE", "POE"
+    AUTRE = "AUTRE", "Autre"
+
+
+class PrescriberType(models.TextChoices):
+
+    DEMANDEUR_EMPLOI = "DEMANDEUR_EMPLOI", "Demandeur d'emploi"
+    PRESCRIPTEUR = "PRESCRIPTEUR", "Prescripteur"
+    EMPLOYEUR = "EMPLOYEUR", "Employeur"
+    AUTRE = "AUTRE", "Autre"
 
 
 class GEIQAddressMixin(models.Model):
@@ -33,6 +65,8 @@ class GEIQAddressMixin(models.Model):
 class GEIQLabelInfo(GEIQAddressMixin, models.Model):
 
     label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
+    company = models.ForeignKey(Company, on_delete=models.PROTECT)  # Match based on SIRET
+    last_synced_at = models.DateTimeField(verbose_name="dernière synchronisation à")
     name = models.CharField(verbose_name="nom")
     created_at = models.DateTimeField("date de création", null=True)
     siret = models.CharField(verbose_name="siret", blank=True)
@@ -70,11 +104,16 @@ class Employee(GEIQAddressMixin, models.Model):
         choices=Title.choices,
     )
     qualification = models.CharField(
-        max_length=2,
-        verbose_name="niveau de qualifacation à l'entrée obtenu",
+        verbose_name="niveau de qualification à l'entrée obtenu",
         blank=True,
         default="",
         choices=Qualification.choices,
+    )
+    prescriber_type = models.CharField(
+        verbose_name="type de prescripteur",
+        blank=True,
+        default="",
+        choices=PrescriberType.choices,
     )
 
     # 'numero': '64',
@@ -91,11 +130,51 @@ class Employee(GEIQAddressMixin, models.Model):
     # 'is_imported': None},
     other_data = models.JSONField(verbose_name="autres données")
 
+    def get_full_name(self):
+        """
+        Return the first_name plus the last_name, with a space in between.
+        """
+        full_name = "%s %s" % (self.first_name.strip().title(), self.last_name.upper())
+        return full_name.strip()
+
 
 class EmployeeContract(models.Model):
 
     label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="contracts")
     antenna = models.ForeignKey(GEIQAntenna, on_delete=models.CASCADE, null=True, related_name="contracts")
+
+    start_at = models.DateTimeField(verbose_name="date de début")
+    planned_end_at = models.DateTimeField(verbose_name="date de fin prévisionnelle")
+    end_at = models.DateTimeField(verbose_name="date de fin", null=True)
+    nb_hours_per_week = models.FloatField(
+        verbose_name="nombre d'heures par semaine",
+        blank=True,
+        null=True,
+    )
+    contract_type = models.CharField(
+        verbose_name="nature du contrat",
+        blank=True,
+        default="",
+        choices=ContractType.choices,
+    )
+
+    other_data = models.JSONField(verbose_name="autres données")
+
+
+class EmployeePrequalification(models.Model):
+
+    label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="prequalifications")
+
+    action = models.CharField(
+        verbose_name="type d'action",
+        blank=True,
+        default="",
+        choices=PrequalificationAction.choices,
+    )
+    start_at = models.DateTimeField(verbose_name="date de début")
+    end_at = models.DateTimeField(verbose_name="date de fin")
+    training_hours_nb = models.PositiveIntegerField("nombre d'heures de formation")
 
     other_data = models.JSONField(verbose_name="autres données")

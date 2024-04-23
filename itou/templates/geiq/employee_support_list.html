@@ -1,0 +1,42 @@
+{% extends "geiq/list_base.html" %}
+
+
+{% block title %}Accompagnements {{ block.super }}{% endblock %}
+
+{% block data_list %}
+
+    <div class="tab-content" id="result_page">
+        <div class="table-responsive-lg mt-3 mt-md-4">
+            <table class="table">
+                <caption class="visually-hidden">Liste des accompagnements</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Nom Prénom</th>
+                        <th scope="col">Action préalable</th>
+                        <th scope="col">Accomp. préalable</th>
+                        <th scope="col">Type de qualification visé</th>
+                        <th scope="col">Niveau de qualif. visé</th>
+                        <th scope="col">Formation prévue</th>
+                        <th scope="col">Formation réalisée</th>
+                        <th scope="col">Accomp. post-contrat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in data_page %}
+                        <tr>
+                            <td>{{ employee.get_full_name }}</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}

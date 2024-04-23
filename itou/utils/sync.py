@@ -79,7 +79,7 @@ def yield_sync_diff(
                 yield DiffItem(
                     key,
                     DiffItemKind.EDITION,
-                    f"\tCHANGED {db_key}={db_val} changed to value={col_val}",
+                    f"\tCHANGED {db_key}={db_val}[{type(db_val)}] changed to value={col_val}[{type(col_val)}]",
                     obj_coll,
                     obj_db,
                 )

@@ -1,0 +1,42 @@
+{% extends "geiq/list_base.html" %}
+
+
+{% block title %}Informations personnelles {{ block.super }}{% endblock %}
+
+{% block data_list %}
+
+    <div class="tab-content" id="result_page">
+        <div class="table-responsive-lg mt-3 mt-md-4">
+            <table class="table">
+                <caption class="visually-hidden">Liste des personnes</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Nom Prénom</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Sexe</th>
+                        <th scope="col">Niveau de qualification</th>
+                        <th scope="col">Commune de résidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in data_page %}
+                        <tr>
+                            <td>{{ employee.get_full_name }}</td>
+                            <td>{{ employee.birthdate }}</td>
+                            <td>
+                                {% if employee.title == "MME" %}
+                                    F
+                                {% elif employee.title == "M" %}
+                                    H
+                                {% endif %}
+                            </td>
+                            <td>{{ employee.qualification }} / {{ employee.qualification.label }}</td>
+                            <td>{{ employee.city }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}

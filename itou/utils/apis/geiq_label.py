@@ -47,26 +47,65 @@ class LabelApiClient:
         assert siret.isdigit(), siret
         return self._command(LabelCommand.GeiqFFGeiq, where=f"geiq.siret,=,{siret}")
 
-    def get_all_geiq(self, *, page_size=50):
+    def get_all_geiq(self, *, page_size=100):
         data = []
         p = 1
-        while new_values := self._command(LabelCommand.GeiqFFGeiq, n=page_size, p=p):
+        while new_values := self._command(LabelCommand.GeiqFFGeiq, sort="geiq.id", n=page_size, p=p):
             data.extend(new_values)
+            if len(new_values) != page_size:
+                break
             p += 1
         return data
 
-    def get_all_contracts(self, geiq_id, *, page_size=50):
+    def get_all_contracts(self, geiq_id, *, page_size=100):
         data = []
         p = 1
+        expected_nb = self._command(
+            LabelCommand.SalarieContrat, join="salariecontrat.salarie,s", where=f"s.geiq,=,{geiq_id}", count=True
+        )
         while new_values := self._command(
-            LabelCommand.SalarieContrat, join="salariecontrat.salarie,s", where=f"s.geiq,=,{geiq_id}", n=page_size, p=p
+            LabelCommand.SalarieContrat,
+            join="salariecontrat.salarie,s",
+            where=f"s.geiq,=,{geiq_id}",
+            sort="salariecontrat.id",
+            n=page_size,
+            p=p,
         ):
             data.extend(new_values)
+            if len(new_values) != page_size:
+                break
             p += 1
+        assert len(data) == expected_nb
+        return data
+
+    def get_all_prequalifications(self, geiq_id, *, page_size=100):
+        data = []
+        p = 1
+        expected_nb = self._command(
+            LabelCommand.SalariePreQualification,
+            join="salarieprequalification.salarie,s",
+            where=f"s.geiq,=,{geiq_id}",
+            count=True,
+        )
+        while new_values := self._command(
+            LabelCommand.SalariePreQualification,
+            join="salarieprequalification.salarie,s",
+            where=f"s.geiq,=,{geiq_id}",
+            sort="salarieprequalification.id",
+            n=page_size,
+            p=p,
+        ):
+            data.extend(new_values)
+            if len(new_values) != page_size:
+                break
+            p += 1
+        assert len(data) == expected_nb
         return data
 
 
 def get_client():
+    if not settings.API_GEIQ_LABEL_BASE_URL or not settings.API_GEIQ_LABEL_TOKEN:
+        return None
     return LabelApiClient(
         base_url=settings.API_GEIQ_LABEL_BASE_URL,
         token=settings.API_GEIQ_LABEL_TOKEN,

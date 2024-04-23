@@ -1,0 +1,43 @@
+{% extends "geiq/list_base.html" %}
+
+
+{% block title %}Sorties {{ block.super }}{% endblock %}
+
+{% block data_list %}
+
+    <div class="tab-content" id="result_page">
+        <div class="table-responsive-lg mt-3 mt-md-4">
+            <table class="table">
+                <caption class="visually-hidden">Liste des sorties</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Nom Prénom</th>
+                        <th scope="col">Motif de rupture anticipée</th>
+                        <th scope="col">Date de rupture anticipée</th>
+                        <th scope="col">Type de qualification obtenue</th>
+                        {# type_qualification_obtenu #}
+                        <th scope="col">Niveau de qualification obtenue</th>
+                        <th scope="col">Situation post-contrat</th>
+                        {# emploi_sorti #}
+                        <th scope="col">Précision</th>
+                        {# emploi_sorti_precision #}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contract in data_page %}
+                        <tr>
+                            <td>{{ contract.employee.get_full_name }}</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}

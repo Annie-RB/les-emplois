@@ -1,0 +1,54 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load format_filters %}
+{% load str_filters %}
+{% load list_filters %}
+{% load django_bootstrap5 %}
+
+{% block title %}Mes salariés - {{ request.current_organization.display_name }} {{ block.super }}{% endblock %}
+
+{% block content_title %}
+    <h1>Bilan d'exécution - {{ request.current_organization.display_name }} - 2023</h1>
+    Ajouter le badge de l'état
+{% endblock %}
+
+{% block messages %}
+    {{ block.super }}
+
+    {% if not label_info %}
+        <div class="alert alert-warning alert-dismissible show" role="status">
+            <p class="mb-0">
+                La correspondance de votre GEIQ avec Label ne semble pas avoir fonctionné. Peut-être êtes-vous connecté sur une antenne ?
+            </p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <section class="s-section">
+        <div class="s-section__container container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="c-box">
+                        <h2>Envoyer le dossier transmis par Label</h2>
+                        <p>
+                            Veuillez vérifier l’exactitude des données de vos publics prioritaires et les mettre à jour si nécessaire depuis votre compte Label avant de les valider.
+                        </p>
+                        <hr>
+                        <h3>Envoyer le dossier transmis par Label</h3>
+                        <p>Fichier non transmis</p>
+                        <hr>
+                        <h3>Données individuelles de parcours</h3>
+                        {% include "geiq/includes/last_synced_at.html" with label_info=label_info oob_swap=False only %}
+                        <form hx-post="{% url "geiq:label_sync" geiq_pk=geiq_pk %}" hx-swap="none">
+                            {% csrf_token %}
+                            <button class="btn">Sync</button>
+                        </form>
+                        <a href="{% url "geiq:employee_list" geiq_pk=geiq_pk info_type=InfoType.PERSONAL_INFORMATION %}" class="btn btn-link">Consulter les données salariés</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

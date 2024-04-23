@@ -1,0 +1,104 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load format_filters %}
+{% load str_filters %}
+{% load list_filters %}
+{% load django_bootstrap5 %}
+
+{% block title %}Mes salariés - {{ request.current_organization.display_name }} {{ block.super }}{% endblock %}
+
+{% block content_title %}
+    <h1>Mes salariés - {{ request.current_organization.display_name }} - 2023</h1>
+    <p>Dernière mise à jour: {{ label_info.last_synced_at|default:"-" }}</p>
+{% endblock %}
+
+{% block content %}
+    <section class="s-section">
+        <div class="s-section__container container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="c-box">
+                        <h2>Indicateurs clés sur les publics prioritaires</h2>
+                        <div class="row">
+                            <div class="col-5">Nombre de personnes accompagnées</div>
+                            <div class="col text-end fw-bold">{{ accompanied_nb|default:"-" }}</div>
+                            <div class="col-5">Nombre potentiel d’aides à 814 €</div>
+                            <div class="col text-end fw-bold">{{ potential_aid_of_814_nb|default:"-" }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5">Nombre de personnes accompagnées sur une durée >3 mois sur l’année</div>
+                            <div class="col text-end fw-bold">{{ accompanied_more_than_3_months_nb|default:"-" }}</div>
+                            <div class="col-5">Nombre potentiel d’aides à 1 400 €</div>
+                            <div class="col text-end fw-bold">{{ potential_aid_of_1400_nb|default:"-" }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5">Nombre de salariés éligibles à l’aide</div>
+                            <div class="col text-end fw-bold">{{ eligible_for_aid_employee_nb|default:"-" }}</div>
+                            <div class="col-5">Montant potentiel de l’aide à l’accompagnement</div>
+                            <div class="col text-end fw-bold">
+                                {% if potential_amount is None %}
+                                    -
+                                {% else %}
+                                    {{ potential_aid_amount }} €
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-12">
+                    <div class="c-box container">
+                        <div class="s-tabs-01__row row">
+                            <div class="s-tabs-01__col col-12">
+                                <ul class="s-tabs-01__nav nav nav-tabs" data-it-sliding-tabs="true" data-it-sliding-tabs-startindex="2">
+                                    <li class="nav-item">
+                                        <a class="nav-link{% if active_tab == InfoType.PERSONAL_INFORMATION %} active{% endif %}"
+                                           href="{% url 'geiq:employee_list' geiq_pk=request.current_organization.pk info_type=InfoType.PERSONAL_INFORMATION.value %}">
+                                            Informations personnelles
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link{% if active_tab == InfoType.JOB_APPLICATION %} active{% endif %}" href="{% url 'geiq:employee_list' geiq_pk=request.current_organization.pk info_type=InfoType.JOB_APPLICATION %}">
+                                            Candidature
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link{% if active_tab == InfoType.SUPPORT %} active{% endif %}" href="{% url 'geiq:employee_list' geiq_pk=request.current_organization.pk info_type=InfoType.SUPPORT %}">
+                                            Accompagnement
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link{% if active_tab == InfoType.CONTRACT %} active{% endif %}" href="{% url 'geiq:employee_list' geiq_pk=request.current_organization.pk info_type=InfoType.CONTRACT %}">
+                                            Contrat
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link{% if active_tab == InfoType.EXIT %} active{% endif %}" href="{% url 'geiq:employee_list' geiq_pk=request.current_organization.pk info_type=InfoType.EXIT %}">
+                                            Sortie
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% if not data_page %}
+                            <div class="text-center my-3 my-md-4">
+                                <p class="mb-1 mt-3">
+                                    <strong>Aucune donnée pour le moment</strong>
+                                </p>
+                            </div>
+                        {% else %}
+                            {% block data_list %}{% endblock %}
+                        {% endif %}
+                        {% include "includes/pagination.html" with page=data_page %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+{% block script %}
+    {{ block.super }}
+    <script src="{% static 'js/sliding_tabs.js'%}"></script>
+{% endblock %}
