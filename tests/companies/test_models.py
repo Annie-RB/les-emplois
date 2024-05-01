@@ -5,6 +5,7 @@ import pytest
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.db.models import Prefetch
 from django.test import RequestFactory, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -13,6 +14,7 @@ from freezegun import freeze_time
 from itou.companies.enums import CompanyKind, ContractType
 from itou.companies.models import Company, JobDescription
 from itou.job_applications.enums import JobApplicationState
+from itou.users.models import User
 from tests.companies.factories import (
     CompanyAfterGracePeriodFactory,
     CompanyFactory,
@@ -204,6 +206,34 @@ class SiaeModelTest(TestCase):
         assert company.kind in email.body
         assert company.siret in email.body
         assert reverse("signup:company_select") in email.body
+
+    def test_check_authorized_members_email(self):
+        company = CompanyFactory(with_membership=True)
+        admin_member = company.members.first()
+
+        with pytest.raises(RuntimeError):
+            company.check_authorized_members_email()
+
+        company = (
+            Company.objects.filter(pk=company.pk)
+            .prefetch_related(
+                Prefetch(
+                    "members",
+                    queryset=User.objects.distinct().filter(
+                        is_active=True,
+                        companymembership__is_active=True,
+                        companymembership__is_admin=True,
+                    ),
+                    to_attr="admin_members",
+                )
+            )
+            .get()
+        )
+
+        email = company.check_authorized_members_email()
+        assert email.to == [admin_member.email]
+        assert company.name in email.subject
+        assert company.name in email.body
 
     def test_deactivation_queryset_methods(self):
         company = CompanyFactory()

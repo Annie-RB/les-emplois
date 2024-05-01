@@ -154,6 +154,15 @@ class OrganizationAbstract(models.Model):
         body = "common/emails/member_deactivation_email_body.txt"
         return get_email_message(to, context, subject, body)
 
+    def check_authorized_members_email(self):
+        if not hasattr(self, "admin_members"):
+            raise RuntimeError("Should only be called with annotated `admin_members`.")
+        to = [member.email for member in self.admin_members]
+        context = {"structure": self}
+        subject = "common/emails/check_authorized_members_email_subject.txt"
+        body = "common/emails/check_authorized_members_email_body.txt"
+        return get_email_message(to, context, subject, body)
+
 
 class MembershipQuerySet(models.QuerySet):
     @property

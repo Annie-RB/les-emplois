@@ -10,6 +10,7 @@ from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import IntegrityError
+from django.db.models import Prefetch
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import get_current_timezone
@@ -19,6 +20,7 @@ from itou.job_applications import models as job_applications_models
 from itou.prescribers.enums import PrescriberAuthorizationStatus, PrescriberOrganizationKind
 from itou.prescribers.management.commands.merge_organizations import organization_merge_into
 from itou.prescribers.models import PrescriberOrganization
+from itou.users.models import User
 from itou.utils.mocks.api_entreprise import ETABLISSEMENT_API_RESULT_MOCK, INSEE_API_RESULT_MOCK
 from tests.common_apps.organizations.tests import assert_set_admin_role__creation, assert_set_admin_role__removal
 from tests.eligibility.factories import GEIQEligibilityDiagnosisFactory
@@ -244,6 +246,34 @@ class PrescriberOrganizationModelTest(TestCase):
         organization.refresh_from_db()
         assert organization.updated_at > old_updated_at
         assert organization.is_head_office is True
+
+    def test_check_authorized_members_email(self):
+        organization = PrescriberOrganizationWithMembershipFactory()
+        admin_member = organization.members.first()
+
+        with pytest.raises(RuntimeError):
+            organization.check_authorized_members_email()
+
+        organization = (
+            PrescriberOrganization.objects.filter(pk=organization.pk)
+            .prefetch_related(
+                Prefetch(
+                    "members",
+                    queryset=User.objects.distinct().filter(
+                        is_active=True,
+                        prescribermembership__is_active=True,
+                        prescribermembership__is_admin=True,
+                    ),
+                    to_attr="admin_members",
+                )
+            )
+            .get()
+        )
+
+        email = organization.check_authorized_members_email()
+        assert email.to == [admin_member.email]
+        assert organization.name in email.subject
+        assert organization.name in email.body
 
 
 class PrescriberOrganizationAdminTest(TestCase):

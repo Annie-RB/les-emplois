@@ -1,6 +1,10 @@
+import pytest
+from django.db.models import Prefetch
 from django.urls import reverse
 from pytest_django.asserts import assertContains, assertRedirects
 
+from itou.institutions.models import Institution
+from itou.users.models import User
 from tests.common_apps.organizations.tests import assert_set_admin_role__creation, assert_set_admin_role__removal
 from tests.institutions.factories import (
     InstitutionMembershipFactory,
@@ -42,6 +46,34 @@ class InstitutionModelTest(TestCase):
         active_user_with_active_membership.save()
 
         assert active_user_with_active_membership not in institution.active_members
+
+    def test_check_authorized_members_email(self):
+        institution = InstitutionWithMembershipFactory()
+        admin_member = institution.members.first()
+
+        with pytest.raises(RuntimeError):
+            institution.check_authorized_members_email()
+
+        institution = (
+            Institution.objects.filter(pk=institution.pk)
+            .prefetch_related(
+                Prefetch(
+                    "members",
+                    queryset=User.objects.distinct().filter(
+                        is_active=True,
+                        institutionmembership__is_active=True,
+                        institutionmembership__is_admin=True,
+                    ),
+                    to_attr="admin_members",
+                )
+            )
+            .get()
+        )
+
+        email = institution.check_authorized_members_email()
+        assert email.to == [admin_member.email]
+        assert institution.name in email.subject
+        assert institution.name in email.body
 
 
 def test_deactivate_last_admin(admin_client, django_capture_on_commit_callbacks):
