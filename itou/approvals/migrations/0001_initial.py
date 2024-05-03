@@ -210,6 +210,7 @@ class Migration(migrations.Migration):
                         choices=[
                             ("AFPA", "AFPA - Agence nationale pour la formation professionnelle des adultes"),
                             ("ASE", "ASE - Aide sociale à l'enfance"),
+                            ("Orienteur", "Autre organisation (orienteur)"),
                             (
                                 "CAARUD",
                                 "CAARUD - Centre d'accueil et d'accompagnement à la réduction de risques pour usagers "
@@ -243,6 +244,12 @@ class Migration(migrations.Migration):
                             (
                                 "ODC",
                                 "Organisation délégataire d'un Conseil Départemental (Orientation et suivi des BRSA)",
+                            ),
+                            ("OHPD", "Organisme habilité par le préfet de département"),
+                            (
+                                "OCASF",
+                                "Organisme mentionné au 8° du I de l’article L. 312-1 du code de l’action sociale et "
+                                "des familles",
                             ),
                             ("PENSION", "Pension de famille / résidence accueil"),
                             ("PIJ_BIJ", "PIJ-BIJ - Point/Bureau information jeunesse"),
@@ -1355,6 +1362,7 @@ class Migration(migrations.Migration):
                         choices=[
                             ("AFPA", "AFPA - Agence nationale pour la formation professionnelle des adultes"),
                             ("ASE", "ASE - Aide sociale à l'enfance"),
+                            ("Orienteur", "Autre organisation (orienteur)"),
                             (
                                 "CAARUD",
                                 "CAARUD - Centre d'accueil et d'accompagnement à la réduction de risques pour usagers "
@@ -1388,6 +1396,12 @@ class Migration(migrations.Migration):
                             (
                                 "ODC",
                                 "Organisation délégataire d'un Conseil Départemental (Orientation et suivi des BRSA)",
+                            ),
+                            ("OHPD", "Organisme habilité par le préfet de département"),
+                            (
+                                "OCASF",
+                                "Organisme mentionné au 8° du I de l’article L. 312-1 du code de l’action sociale et "
+                                "des familles",
                             ),
                             ("PENSION", "Pension de famille / résidence accueil"),
                             ("PIJ_BIJ", "PIJ-BIJ - Point/Bureau information jeunesse"),
