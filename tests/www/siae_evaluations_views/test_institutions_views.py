@@ -3276,7 +3276,7 @@ class InstitutionEvaluatedJobApplicationViewTest(TestCase):
     btn_modifier_html = """
     <button class="btn btn-sm btn-primary" aria-label="Modifier l'état de ce justificatif">Modifier</button>
     """
-    save_text = "Enregistrer le commentaire"
+    save_text = "Enregistrer le commentaire et retourner à la liste des auto-prescriptions"
 
     def setUp(self):
         super().setUp()
@@ -3443,6 +3443,7 @@ class InstitutionEvaluatedJobApplicationViewTest(TestCase):
             + f"#{evaluated_job_application.pk}"
         )
         self.assertContains(response, self.save_text, count=1)
+        self.assertNotContains(response, "Commentaire de la DDETS")
 
     def test_get_before_new_criteria_submitted(self):
         now = timezone.now()
