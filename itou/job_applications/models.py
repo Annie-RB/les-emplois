@@ -431,6 +431,17 @@ class JobApplicationQuerySet(models.QuerySet):
             geiq_eligibility_diagnosis__job_seeker=F("job_seeker")
         )
 
+    def prescriptions_of(self, user, organization=None):
+        if user.is_prescriber:
+            if organization:
+                return self.filter(
+                    (Q(sender=user) & Q(sender_prescriber_organization__isnull=True))
+                    | Q(sender_prescriber_organization=organization)
+                )
+            else:
+                return user.job_applications_sent
+        return self.none()
+
 
 class JobApplication(xwf_models.WorkflowEnabled, models.Model):
     """
