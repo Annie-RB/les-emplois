@@ -85,6 +85,11 @@ class ApplyStepBaseView(LoginRequiredMixin, TemplateView):
         self.company = get_object_or_404(Company.objects.with_has_active_members(), pk=kwargs["company_pk"])
         self.apply_session = SessionNamespace(request.session, f"job_application-{self.company.pk}")
         self.process = kwargs.pop("process", None)
+        # TODO
+        self.prescription_process = request.user.is_prescriber or (
+            request.user.is_employer and self.company != request.current_organization
+        )
+        self.auto_prescription_process = request.user.is_employer and self.company == request.current_organization
         super().setup(request, *args, **kwargs)
 
     def dispatch(self, request, *args, **kwargs):
@@ -97,8 +102,6 @@ class ApplyStepBaseView(LoginRequiredMixin, TemplateView):
                 UserKind.EMPLOYER,
             ]:
                 raise PermissionDenied("Vous n'êtes pas autorisé à déposer de candidature.")
-            elif request.user.is_employer and not self.company.has_member(request.user):
-                raise PermissionDenied("Vous ne pouvez postuler pour un candidat que dans votre structure.")
 
         if not self.company.has_active_members:
             raise PermissionDenied(

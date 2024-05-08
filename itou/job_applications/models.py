@@ -440,6 +440,8 @@ class JobApplicationQuerySet(models.QuerySet):
                 )
             else:
                 return user.job_applications_sent
+        elif user.is_employer and organization:
+            return self.filter(sender_company=organization).exclude(to_company=organization)
         return self.none()
 
 

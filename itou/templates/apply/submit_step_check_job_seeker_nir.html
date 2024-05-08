@@ -9,7 +9,7 @@
 {% block messages %}
     {{ block.super }}
 
-    {% if request.user.is_employer %}
+    {% if auto_prescription_process %}
         {% if siae.is_subject_to_eligibility_rules or siae.kind == CompanyKind.GEIQ %}
             <div class="alert alert-info alert-dismissible fade show">
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
@@ -28,10 +28,11 @@
                     {% else %}
                         {% if siae.kind == CompanyKind.GEIQ %}
                             Cet espace vous permet d’enregistrer une candidature à traiter plus tard (avec la possibilité d’enregistrer une action préalable au recrutement).
+                        {% elif auto_prescription_process %}
+                            Si vous souhaitez déclarer directement une embauche, veuillez vous rendre sur <a href="{% url 'apply:check_nir_for_hire' company_pk=siae.pk %}">Déclarer une embauche</a> depuis le tableau de bord.
                         {% else %}
                             Cet espace vous permet d’enregistrer une nouvelle candidature.
                         {% endif %}
-                        Si vous souhaitez déclarer directement une embauche, veuillez vous rendre sur <a href="{% url 'apply:check_nir_for_hire' company_pk=siae.pk %}">Déclarer une embauche</a> depuis le tableau de bord.
                     {% endif %}
                 </p>
             </div>
