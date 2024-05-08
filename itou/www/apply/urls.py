@@ -201,17 +201,19 @@ urlpatterns = [
     ),
     # List.
     path("job_seeker/list", list_views.list_for_job_seeker, name="list_for_job_seeker"),
-    path("prescriber/list", list_views.list_for_prescriber, name="list_for_prescriber"),
-    path("prescriber/list/exports", list_views.list_for_prescriber_exports, name="list_for_prescriber_exports"),
+    path("prescriptions/list", list_views.list_for_prescriptions, name="list_for_prescriptions"),
     path(
-        "prescriber/list/exports/download",
-        list_views.list_for_prescriber_exports_download,
-        name="list_for_prescriber_exports_download",
+        "prescriptions/list/exports", list_views.list_for_prescriptions_exports, name="list_for_prescriptions_exports"
     ),
     path(
-        "prescriber/list/exports/download/<str:month_identifier>",
-        list_views.list_for_prescriber_exports_download,
-        name="list_for_prescriber_exports_download",
+        "prescriptions/list/exports/download",
+        list_views.list_for_prescriptions_exports_download,
+        name="list_for_prescriptions_exports_download",
+    ),
+    path(
+        "prescriptions/list/exports/download/<str:month_identifier>",
+        list_views.list_for_prescriptions_exports_download,
+        name="list_for_prescriptions_exports_download",
     ),
     path("siae/list", list_views.list_for_siae, name="list_for_siae"),
     path("siae/list/exports", list_views.list_for_siae_exports, name="list_for_siae_exports"),
