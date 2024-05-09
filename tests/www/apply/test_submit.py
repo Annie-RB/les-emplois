@@ -4294,8 +4294,9 @@ class EligibilityForHireTestCase(TestCase):
 
     def test_job_seeker_without_valid_diagnosis(self):
         self.company = CompanyFactory(subject_to_eligibility=True, with_membership=True)
-        assert not self.job_seeker.has_valid_diagnosis(for_siae=self.company)
-        self.client.force_login(self.company.members.first())
+        employer = self.company.members.first()
+        assert not self.job_seeker.has_valid_diagnosis(employer, for_siae=self.company)
+        self.client.force_login(employer)
         response = self.client.get(self._reverse("apply:eligibility_for_hire"))
         self.assertContains(response, "Déclarer l’embauche de Ellie GIBILITAY")
         self.assertContains(response, "Valider l'éligibilité IAE")
@@ -4315,7 +4316,7 @@ class EligibilityForHireTestCase(TestCase):
             },
         )
         self.assertRedirects(response, self._reverse("apply:hire_confirmation"))
-        assert self.job_seeker.has_valid_diagnosis(for_siae=self.company)
+        assert self.job_seeker.has_valid_diagnosis(employer, for_siae=self.company)
 
 
 class GEIQEligibilityForHireTestCase(TestCase):

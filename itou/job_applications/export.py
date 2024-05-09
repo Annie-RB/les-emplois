@@ -58,10 +58,10 @@ def _get_selected_jobs(job_application):
     return selected_jobs
 
 
-def _get_eligibility_status(job_application):
+def _get_eligibility_status(request, job_application):
     eligibility = "non"
     # Eligibility diagnoses made by SIAE are ignored.
-    if job_application.job_seeker.has_valid_diagnosis():
+    if job_application.job_seeker.has_valid_diagnosis(request.user):
         eligibility = "oui"
 
     return eligibility
@@ -92,7 +92,7 @@ def _resolve_title(title, nir):
     return ""
 
 
-def _serialize_job_application(job_application):
+def _serialize_job_application(request, job_application):
     job_seeker = job_application.job_seeker
     company = job_application.to_company
 
@@ -126,7 +126,7 @@ def _serialize_job_application(job_application):
         _format_date(job_application.hiring_start_at),
         _format_date(job_application.hiring_end_at),
         job_application.get_refusal_reason_display(),
-        _get_eligibility_status(job_application),
+        _get_eligibility_status(request, job_application),
         numero_pass_iae,
         _format_date(approval_start_date),
         _format_date(approval_end_date),
@@ -134,16 +134,17 @@ def _serialize_job_application(job_application):
     ]
 
 
-def _job_applications_serializer(queryset):
-    return [_serialize_job_application(job_application) for job_application in queryset]
+def _job_applications_serializer(request, queryset):
+    return [_serialize_job_application(request, job_application) for job_application in queryset]
 
 
-def stream_xlsx_export(job_applications, filename):
+def stream_xlsx_export(request, job_applications, filename):
     """
     Takes a list of job application, converts them to XLSX and writes them in the provided stream
     The stream can be for instance an http response, a string (io.StringIO()) or a file
     """
     return to_streaming_response(
+        request,
         job_applications,
         filename,
         JOB_APPLICATION_CSV_HEADERS,

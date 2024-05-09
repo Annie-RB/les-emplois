@@ -139,7 +139,7 @@ class ApplicationBaseView(ApplyStepBaseView):
         else:
             # General IAE eligibility case
             self.eligibility_diagnosis = EligibilityDiagnosis.objects.last_considered_valid(
-                self.job_seeker, for_siae=self.company
+                self.job_seeker, request.user, for_siae=self.company
             )
 
     def get_context_data(self, **kwargs):
@@ -151,6 +151,8 @@ class ApplicationBaseView(ApplyStepBaseView):
             "is_subject_to_geiq_eligibility_rules": self.company.kind == CompanyKind.GEIQ,
             "can_edit_personal_information": self.request.user.can_edit_personal_information(self.job_seeker),
             "can_view_personal_information": self.request.user.can_view_personal_information(self.job_seeker),
+            "has_valid_IAE_diagnosis_for_employer": self.request.user.is_employer
+            and self.job_seeker.has_valid_diagnosis(self.request.user),
             # Do not show the warning for job seekers
             "new_check_needed": (
                 not self.request.user.is_job_seeker
@@ -1502,7 +1504,7 @@ def eligibility_for_hire(request, company_pk, job_seeker_pk, template_name="appl
         # No need for eligibility diagnosis if the job seeker already has a PASS IAE
         job_seeker.has_valid_common_approval,
     ]
-    if any(bypass_eligibility_conditions) or job_seeker.has_valid_diagnosis(for_siae=company):
+    if any(bypass_eligibility_conditions) or job_seeker.has_valid_diagnosis(request.user, for_siae=company):
         return HttpResponseRedirect(next_url)
     return common_views._eligibility(
         request,
@@ -1544,6 +1546,7 @@ def geiq_eligibility_for_hire(
         extra_context={
             "hire_process": True,
             "is_subject_to_eligibility_rules": False,
+            "has_valid_IAE_diagnosis_for_employer": False,
         },
     )
 
@@ -1573,7 +1576,9 @@ def hire_confirmation(request, company_pk, job_seeker_pk, template_name="apply/s
     else:
         _check_job_seeker_approval(request, job_seeker, company)
         # General IAE eligibility case
-        eligibility_diagnosis = EligibilityDiagnosis.objects.last_considered_valid(job_seeker, for_siae=company)
+        eligibility_diagnosis = EligibilityDiagnosis.objects.last_considered_valid(
+            job_seeker, request.user, for_siae=company
+        )
         if eligibility_diagnosis is not None:
             # The job_seeker object already contains a lot of information: no need to re-retrieve it
             eligibility_diagnosis.job_seeker = job_seeker
@@ -1595,5 +1600,6 @@ def hire_confirmation(request, company_pk, job_seeker_pk, template_name="apply/s
             "geiq_eligibility_diagnosis": geiq_eligibility_diagnosis,
             "eligibility_diagnosis": eligibility_diagnosis,
             "is_subject_to_geiq_eligibility_rules": company.kind == CompanyKind.GEIQ,
+            "has_valid_IAE_diagnosis_for_employer": job_seeker.has_valid_diagnosis(request.user),
         },
     )

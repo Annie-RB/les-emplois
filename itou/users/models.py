@@ -455,7 +455,7 @@ class User(AbstractUser, AddressMixin):
         """
         Rationale:
         - if there is a latest PASS IAE that is valid, it is returned.
-        - if there is no PASS IAE, we return the longest PE Approval whatever its state.
+        - if there is no PASS IAE, we return the latest, longest PE Approval whatever its state.
         - if there is no PASS nor PE Approval, or the waiting period for those is over, return nothing.
         - if the latest PASS IAE is invalid:
           * but still in waiting period:
@@ -494,7 +494,7 @@ class User(AbstractUser, AddressMixin):
     def has_no_common_approval(self):
         return not self.latest_approval and not self.latest_pe_approval
 
-    def approval_can_be_renewed_by(self, siae, sender_prescriber_organization):
+    def approval_can_be_renewed_by(self, acting_user, siae, sender_prescriber_organization):
         """
         An approval in waiting period can only be bypassed if the prescriber is authorized
         or if the structure is not a SIAE.
@@ -504,7 +504,7 @@ class User(AbstractUser, AddressMixin):
         )
 
         # Only diagnoses made by authorized prescribers are taken into account.
-        has_valid_diagnosis = self.has_valid_diagnosis()
+        has_valid_diagnosis = self.has_valid_diagnosis(acting_user)
         return (
             self.has_common_approval_in_waiting_period
             and siae.is_subject_to_eligibility_rules
@@ -558,8 +558,8 @@ class User(AbstractUser, AddressMixin):
     def has_jobseeker_profile(self):
         return self.is_job_seeker and hasattr(self, "jobseeker_profile")
 
-    def has_valid_diagnosis(self, for_siae=None):
-        return self.eligibility_diagnoses.has_considered_valid(job_seeker=self, for_siae=for_siae)
+    def has_valid_diagnosis(self, viewing_user, for_siae=None):
+        return self.eligibility_diagnoses.has_considered_valid(self, viewing_user, for_siae=for_siae)
 
     def joined_recently(self):
         time_since_date_joined = timezone.now() - self.date_joined

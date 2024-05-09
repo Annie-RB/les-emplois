@@ -96,8 +96,10 @@ def details_for_jobseeker(request, job_application_id, template_name="apply/proc
         "can_view_personal_information": request.user.can_view_personal_information(job_application.job_seeker),
         "can_edit_personal_information": request.user.can_edit_personal_information(job_application.job_seeker),
         "display_refusal_info": False,
-        "eligibility_diagnosis": job_application.get_eligibility_diagnosis(),
+        "eligibility_diagnosis": job_application.get_eligibility_diagnosis(request.user),
         "expired_eligibility_diagnosis": expired_eligibility_diagnosis,
+        # User is a job seeker.
+        "has_valid_IAE_diagnosis_for_employer": False,
         "geiq_eligibility_diagnosis": geiq_eligibility_diagnosis,
         "job_application": job_application,
         "transition_logs": transition_logs,
@@ -151,7 +153,9 @@ def details_for_company(request, job_application_id, template_name="apply/proces
         "can_view_personal_information": True,  # SIAE members have access to personal info
         "can_edit_personal_information": request.user.can_edit_personal_information(job_application.job_seeker),
         "display_refusal_info": False,
-        "eligibility_diagnosis": job_application.get_eligibility_diagnosis(),
+        "eligibility_diagnosis": job_application.get_eligibility_diagnosis(request.user),
+        "eligibility_diagnosis_by_siae_required": job_application.eligibility_diagnosis_by_siae_required(request.user),
+        "has_valid_IAE_diagnosis_for_employer": job_application.job_seeker.has_valid_diagnosis(request.user),
         "expired_eligibility_diagnosis": expired_eligibility_diagnosis,
         "geiq_eligibility_diagnosis": geiq_eligibility_diagnosis,
         "job_application": job_application,
@@ -220,8 +224,10 @@ def details_for_prescriber(request, job_application_id, template_name="apply/pro
     context = {
         "can_view_personal_information": request.user.can_view_personal_information(job_application.job_seeker),
         "can_edit_personal_information": request.user.can_edit_personal_information(job_application.job_seeker),
-        "eligibility_diagnosis": job_application.get_eligibility_diagnosis(),
+        "eligibility_diagnosis": job_application.get_eligibility_diagnosis(request.user),
         "geiq_eligibility_diagnosis": geiq_eligibility_diagnosis,
+        # User is a prescriber.
+        "has_valid_IAE_diagnosis_for_employer": False,
         "job_application": job_application,
         "transition_logs": transition_logs,
         "back_url": back_url,
@@ -343,6 +349,9 @@ class JobApplicationRefuseView(LoginRequiredMixin, NamedUrlSessionWizardView):
             context["refusal_reason_shared_with_job_seeker"] = cleaned_data["refusal_reason_shared_with_job_seeker"]
         return context | {
             "job_application": self.job_application,
+            "has_valid_IAE_diagnosis_for_employer": self.job_application.job_seeker.has_valid_diagnosis(
+                self.request.user
+            ),
             "can_view_personal_information": True,  # SIAE members have access to personal info
             "matomo_custom_title": "Candidature refusée",
             "primary_button_label": "Suivant" if context["wizard"]["steps"].next else "Confirmer le refus",
@@ -402,6 +411,7 @@ def postpone(request, job_application_id, template_name="apply/process_postpone.
     context = {
         "form": form,
         "job_application": job_application,
+        "has_valid_IAE_diagnosis_for_employer": job_application.job_seeker.has_valid_diagnosis(request.user),
         "can_view_personal_information": True,  # SIAE members have access to personal info
         "matomo_custom_title": "Candidature différée",
     }
@@ -417,7 +427,9 @@ def accept(request, job_application_id, template_name="apply/process_accept.html
     job_application = get_object_or_404(queryset, id=job_application_id)
     check_waiting_period(job_application)
     next_url = reverse("apply:details_for_company", kwargs={"job_application_id": job_application.pk})
-    if not job_application.hiring_without_approval and job_application.eligibility_diagnosis_by_siae_required:
+    if not job_application.hiring_without_approval and job_application.eligibility_diagnosis_by_siae_required(
+        request.user
+    ):
         messages.error(request, "Cette candidature requiert un diagnostic d'éligibilité pour être acceptée.")
         return HttpResponseRedirect(next_url)
 
@@ -428,7 +440,9 @@ def accept(request, job_application_id, template_name="apply/process_accept.html
         error_url=next_url,
         back_url=next_url,
         template_name=template_name,
-        extra_context={},
+        extra_context={
+            "has_valid_IAE_diagnosis_for_employer": job_application.job_seeker.has_valid_diagnosis(request.user),
+        },
         job_application=job_application,
     )
 
@@ -498,6 +512,7 @@ def cancel(request, job_application_id, template_name="apply/process_cancel.html
     context = {
         "can_view_personal_information": True,  # SIAE members have access to personal info
         "job_application": job_application,
+        "has_valid_IAE_diagnosis_for_employer": job_application.job_seeker.has_valid_diagnosis(request.user),
         "matomo_custom_title": "Candidature annulée",
     }
     return render(request, template_name, context)
@@ -599,7 +614,7 @@ def eligibility(request, job_application_id, template_name="apply/process_eligib
     Check eligibility (as an SIAE).
     """
 
-    queryset = JobApplication.objects.is_active_company_member(request.user)
+    queryset = JobApplication.objects.select_related("job_seeker").is_active_company_member(request.user)
     job_application = get_object_or_404(
         queryset,
         id=job_application_id,
@@ -612,7 +627,10 @@ def eligibility(request, job_application_id, template_name="apply/process_eligib
         cancel_url=reverse("apply:details_for_company", kwargs={"job_application_id": job_application.id}),
         next_url=reverse("apply:accept", kwargs={"job_application_id": job_application.id}),
         template_name=template_name,
-        extra_context={"job_application": job_application},
+        extra_context={
+            "job_application": job_application,
+            "has_valid_IAE_diagnosis_for_employer": job_application.job_seeker.has_valid_diagnosis(request.user),
+        },
     )
 
 
@@ -676,6 +694,8 @@ def delete_prior_action(request, job_application_id, prior_action_id):
             context={
                 "job_application": job_application,
                 "transition_logs": job_application.logs.select_related("user").all(),
+                # GEIQ cannot require IAE eligibility diagnosis, but shared templates need this variable.
+                "eligibility_diagnosis_by_siae_required": False,
                 "geiq_eligibility_diagnosis": (
                     _get_geiq_eligibility_diagnosis_for_company(job_application)
                     if job_application.to_company.kind == CompanyKind.GEIQ
@@ -717,6 +737,8 @@ def add_or_modify_prior_action(request, job_application_id, prior_action_id=None
             {
                 "job_application": job_application,
                 "prior_action": prior_action,
+                # GEIQ cannot require IAE eligibility diagnosis, but shared templates need this variable.
+                "eligibility_diagnosis_by_siae_required": False,
             },
         )
 
@@ -756,6 +778,8 @@ def add_or_modify_prior_action(request, job_application_id, prior_action_id=None
                     # If out-of-band changes are needed
                     "with_oob_state_update": state_update,
                     "transition_logs": job_application.logs.select_related("user").all() if state_update else None,
+                    # GEIQ cannot require IAE eligibility diagnosis, but shared templates need this variable.
+                    "eligibility_diagnosis_by_siae_required": False,
                     "geiq_eligibility_diagnosis": geiq_eligibility_diagnosis,
                 },
             )

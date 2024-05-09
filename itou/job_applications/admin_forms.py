@@ -39,7 +39,8 @@ class JobApplicationAdminForm(forms.ModelForm):
             and self.cleaned_data.get("hiring_without_approval") is not True
             and (job_seeker := self.cleaned_data.get("job_seeker"))
             and not job_seeker.has_valid_common_approval
-            and not EligibilityDiagnosis.objects.last_considered_valid(job_seeker, for_siae=to_company)
+            # Viewing user isn’t relevant, pass None.
+            and not EligibilityDiagnosis.objects.last_considered_valid(job_seeker, None, for_siae=to_company)
         ):
             self.add_error(
                 None,

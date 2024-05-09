@@ -74,7 +74,7 @@ Arguments:
             {% endif %}
         </ul>
     {% elif common_approval.is_in_waiting_period %}
-        {% if user.is_employer and common_approval.user.has_valid_diagnosis %}
+        {% if has_valid_IAE_diagnosis_for_employer %}
             {% comment %}
             When an authorized prescriber bypasses the waiting period and sends a candidate
             with an "expired" approval, the employer receives the application with the mention

@@ -775,14 +775,13 @@ class JobApplication(xwf_models.WorkflowEnabled, models.Model):
     def is_spontaneous(self):
         return not self.selected_jobs.exists()
 
-    @property
-    def eligibility_diagnosis_by_siae_required(self):
+    def eligibility_diagnosis_by_siae_required(self, viewing_user):
         """
         Returns True if an eligibility diagnosis must be made by an SIAE
         when processing an application, False otherwise.
         """
         return self.to_company.is_subject_to_eligibility_rules and not self.job_seeker.has_valid_diagnosis(
-            for_siae=self.to_company
+            viewing_user, for_siae=self.to_company
         )
 
     @property
@@ -942,7 +941,7 @@ class JobApplication(xwf_models.WorkflowEnabled, models.Model):
         if self.sender_kind == SenderKind.PRESCRIBER and self.sender_id:  # Sender user may have been deleted.
             self.notifications_transfer_for_proxy(notification_context).send()
 
-    def get_eligibility_diagnosis(self):
+    def get_eligibility_diagnosis(self, viewing_user):
         """
         Returns the eligibility diagnosis linked to this job application or None.
         """
@@ -952,7 +951,11 @@ class JobApplication(xwf_models.WorkflowEnabled, models.Model):
             return self.eligibility_diagnosis
         # As long as the job application has not been accepted, diagnosis-related
         # business rules may still prioritize one diagnosis over another.
-        return EligibilityDiagnosis.objects.last_considered_valid(self.job_seeker, for_siae=self.to_company)
+        return EligibilityDiagnosis.objects.last_considered_valid(
+            self.job_seeker,
+            viewing_user,
+            for_siae=self.to_company,
+        )
 
     # Workflow transitions.
 
@@ -976,7 +979,7 @@ class JobApplication(xwf_models.WorkflowEnabled, models.Model):
         # Link to the job seeker's eligibility diagnosis.
         if self.to_company.is_subject_to_eligibility_rules:
             self.eligibility_diagnosis = EligibilityDiagnosis.objects.last_considered_valid(
-                self.job_seeker, for_siae=self.to_company
+                self.job_seeker, accepted_by, for_siae=self.to_company
             )
 
         # Approval issuance logic.

@@ -66,6 +66,11 @@ def _add_administrative_criteria(job_applications):
         job_application.preloaded_administrative_criteria_extra_nb = extra_nb
 
 
+def _add_eligibility_diagnosis_required(job_applications, viewing_user):
+    for job_app in job_applications:
+        job_app.iae_eligibility_diagnosis_required = job_app.eligibility_diagnosis_by_siae_required(viewing_user)
+
+
 @login_required
 @user_passes_test(lambda u: u.is_job_seeker, login_url=reverse_lazy("search:employers_home"), redirect_field_name=None)
 def list_for_job_seeker(request, template_name="apply/list_for_job_seeker.html"):
@@ -121,6 +126,7 @@ def list_for_prescriber(request, template_name="apply/list_for_prescriber.html")
     _add_pending_for_weeks(job_applications_page)
     _add_user_can_view_personal_information(job_applications_page, request.user.can_view_personal_information)
     _add_administrative_criteria(job_applications_page)
+    _add_eligibility_diagnosis_required(job_applications_page, request.user)
 
     context = {
         "job_applications_page": job_applications_page,
@@ -170,7 +176,7 @@ def list_for_prescriber_exports_download(request, month_identifier=None):
         filename = f"{filename}-{month_identifier}"
         job_applications = job_applications.created_on_given_year_and_month(year, month)
 
-    return stream_xlsx_export(job_applications, filename)
+    return stream_xlsx_export(request, job_applications, filename)
 
 
 @login_required
@@ -202,8 +208,10 @@ def list_for_siae(request, template_name="apply/list_for_siae.html"):
     # SIAE members have access to personal info
     _add_user_can_view_personal_information(job_applications_page, lambda ja: True)
 
-    if company.kind in SIAE_WITH_CONVENTION_KINDS:
+    iae_company = company.kind in SIAE_WITH_CONVENTION_KINDS
+    if iae_company:
         _add_administrative_criteria(job_applications_page)
+    _add_eligibility_diagnosis_required(job_applications_page, request.user)
 
     context = {
         "siae": company,
@@ -256,4 +264,4 @@ def list_for_siae_exports_download(request, month_identifier=None):
         filename = f"{filename}-{month_identifier}"
         job_applications = job_applications.created_on_given_year_and_month(year, month)
 
-    return stream_xlsx_export(job_applications, filename)
+    return stream_xlsx_export(request, job_applications, filename)

@@ -46,17 +46,21 @@ class EligibilityDiagnosisManagerTest(TestCase):
         cls.job_seeker = JobSeekerFactory(with_pole_emploi_id=True)
 
     def test_no_diagnosis(self):
+        org = PrescriberOrganizationWithMembershipFactory(authorized=True)
+        prescriber = org.members.get()
         has_considered_valid = EligibilityDiagnosis.objects.has_considered_valid(job_seeker=self.job_seeker)
-        last_considered_valid = EligibilityDiagnosis.objects.last_considered_valid(job_seeker=self.job_seeker)
+        last_considered_valid = EligibilityDiagnosis.objects.last_considered_valid(self.job_seeker, prescriber)
         last_expired = EligibilityDiagnosis.objects.last_expired(job_seeker=self.job_seeker)
         assert last_considered_valid is None
         assert last_expired is None
         assert not has_considered_valid
 
     def test_itou_diagnosis(self):
+        org = PrescriberOrganizationWithMembershipFactory(authorized=True)
+        prescriber = org.members.get()
         diagnosis = EligibilityDiagnosisFactory(job_seeker=self.job_seeker)
         has_considered_valid = EligibilityDiagnosis.objects.has_considered_valid(job_seeker=diagnosis.job_seeker)
-        last_considered_valid = EligibilityDiagnosis.objects.last_considered_valid(job_seeker=diagnosis.job_seeker)
+        last_considered_valid = EligibilityDiagnosis.objects.last_considered_valid(diagnosis.job_seeker, prescriber)
         last_expired = EligibilityDiagnosis.objects.last_expired(job_seeker=diagnosis.job_seeker)
         assert last_considered_valid == diagnosis
         assert last_expired is None

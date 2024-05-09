@@ -134,6 +134,8 @@ def dashboard(request, template_name="dashboard/dashboard.html"):
         "can_view_stats_dihal": stats_utils.can_view_stats_dihal(request),
         "can_view_stats_drihl": stats_utils.can_view_stats_drihl(request),
         "can_view_stats_iae_network": stats_utils.can_view_stats_iae_network(request),
+        # Only the job_seeker can see the PASS status (which requires this variable) in its dashboard.
+        "has_valid_IAE_diagnosis_for_employer": False,
         "num_rejected_employee_records": 0,
         "pending_prolongation_requests": None,
         "evaluated_siae_notifications": EvaluatedSiae.objects.none(),

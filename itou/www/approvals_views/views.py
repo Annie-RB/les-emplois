@@ -116,7 +116,12 @@ class ApprovalDetailView(ApprovalBaseViewMixin, DetailView):
         context["job_application"] = job_application
         context["hiring_pending"] = job_application and job_application.is_pending
         context["matomo_custom_title"] = "Profil salarié"
-        context["eligibility_diagnosis"] = job_application and job_application.get_eligibility_diagnosis()
+        context["eligibility_diagnosis"] = job_application and job_application.get_eligibility_diagnosis(
+            self.request.user
+        )
+        context["has_valid_IAE_diagnosis_for_employer"] = (
+            self.request.user.is_employer and approval.user.has_valid_diagnosis(self.request.user)
+        )
         context["approval_deletion_form_url"] = None
         context["back_url"] = get_safe_url(self.request, "back_url", fallback_url=reverse_lazy("approvals:list"))
 
@@ -316,6 +321,8 @@ def declare_prolongation(request, approval_id, template_name="approvals/declare_
         "preview": preview,
         "unfold_details": form.data.get("reason") in PROLONGATION_REPORT_FILE_REASONS,
         "can_upload_prolongation_report": siae.can_upload_prolongation_report,
+        "has_valid_IAE_diagnosis_for_employer": request.user.is_employer
+        and approval.user.has_valid_diagnosis(request.user),
     }
 
     return render(request, template_name, context)
@@ -453,6 +460,9 @@ class ProlongationRequestViewMixin(LoginRequiredMixin):
     def get_context_data(self, **kwargs):
         return super().get_context_data(**kwargs) | {
             "prolongation_request": self.prolongation_request,
+            "has_valid_IAE_diagnosis_for_employer": self.prolongation_request.approval.user.has_valid_diagnosis(
+                self.request.user
+            ),
             "matomo_custom_title": "Demande de prolongation",
             "back_url": add_url_params(reverse("approvals:prolongation_requests_list"), {"only_pending": "on"}),
         }
@@ -543,6 +553,8 @@ def suspend(request, approval_id, template_name="approvals/suspend.html"):
         "back_url": back_url,
         "form": form,
         "preview": preview,
+        "has_valid_IAE_diagnosis_for_employer": request.user.is_employer
+        and approval.user.has_valid_diagnosis(request.user),
     }
     return render(request, template_name, context)
 

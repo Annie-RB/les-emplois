@@ -31,13 +31,13 @@ def _generate_excel_template(headers):
     return buffer
 
 
-def to_streaming_response(queryset, filename, headers, serializer, with_time=False):
+def to_streaming_response(request, queryset, filename, headers, serializer, with_time=False):
     """Generate a HTTP Streaming response with a XLSX file"""
 
     xlsx_streaming.set_export_timezone(timezone.get_default_timezone())
     openxml_mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     template = _generate_excel_template(headers)
-    stream = xlsx_streaming.stream_queryset_as_xlsx(queryset, template, serializer=serializer)
+    stream = xlsx_streaming.stream_queryset_as_xlsx(request, queryset, template, serializer=serializer)
     response = http.StreamingHttpResponse(stream, content_type=openxml_mimetype)
     if with_time:
         now = timezone.now().isoformat(timespec="seconds").replace(":", "-")
