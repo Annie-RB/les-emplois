@@ -5,7 +5,7 @@ from django.http import Http404
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
-from itou.geiq.models import Employee, EmployeeContract, GEIQLabelInfo
+from itou.geiq.models import Employee, EmployeeContract, ImplementationAssessment
 from itou.geiq.sync import sync_employee_and_contracts
 from itou.utils.pagination import pager
 
@@ -26,7 +26,7 @@ class InfoType(enum.StrEnum):
 def assessment_info(request, geiq_pk, year=None, template_name="geiq/assessment_info.html"):
     if geiq_pk not in {org.pk for org in request.organizations}:
         raise Http404("GEIQ inconnue")
-    geiq_label_info = GEIQLabelInfo.objects.filter(company_id=geiq_pk).first()
+    geiq_label_info = ImplementationAssessment.objects.filter(company_id=geiq_pk).first()
     context = {
         "geiq_pk": geiq_pk,
         "InfoType": InfoType,
@@ -44,7 +44,7 @@ def employee_list(request, geiq_pk, info_type, year=None):
         raise Http404("Type de donnée inconnu")
     if geiq_pk not in {org.pk for org in request.organizations}:
         raise Http404("GEIQ inconnue")
-    geiq_label_info = GEIQLabelInfo.objects.filter(company_id=geiq_pk).first()
+    geiq_label_info = ImplementationAssessment.objects.filter(company_id=geiq_pk).first()
 
     match info_type:
         case InfoType.PERSONAL_INFORMATION:
@@ -91,7 +91,7 @@ def employee_list(request, geiq_pk, info_type, year=None):
 def label_sync(request, geiq_pk):
     if geiq_pk not in {org.pk for org in request.organizations}:
         raise Http404("GEIQ inconnue")
-    geiq_label_info = GEIQLabelInfo.objects.filter(company_id=geiq_pk).select_for_update().first()
+    geiq_label_info = ImplementationAssessment.objects.filter(company_id=geiq_pk).select_for_update().first()
 
     if not geiq_label_info:
         raise Http404("GEIQ inconnue de Label")

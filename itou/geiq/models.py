@@ -62,11 +62,12 @@ class GEIQAddressMixin(models.Model):
         abstract = True
 
 
-class GEIQLabelInfo(GEIQAddressMixin, models.Model):
+class ImplementationAssessment(GEIQAddressMixin, models.Model):
 
-    label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
+    year = models.IntegerField(verbose_name="année")
+    label_id = models.IntegerField(verbose_name="id LABEL")
     company = models.ForeignKey(Company, on_delete=models.PROTECT)  # Match based on SIRET
-    last_synced_at = models.DateTimeField(verbose_name="dernière synchronisation à")
+    last_synced_at = models.DateTimeField(verbose_name="dernière synchronisation à", null=True)
     name = models.CharField(verbose_name="nom")
     created_at = models.DateTimeField("date de création", null=True)
     siret = models.CharField(verbose_name="siret", blank=True)
@@ -76,11 +77,17 @@ class GEIQLabelInfo(GEIQAddressMixin, models.Model):
     ffgeiq_member = models.BooleanField("adherent FFGEIQ")
     other_data = models.JSONField(verbose_name="autres données")
 
+    class Meta:
+        unique_together = [
+            ("year", "label_id"),
+            ("year", "company"),
+        ]
+
 
 class Employee(GEIQAddressMixin, models.Model):
 
-    label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
-    geiq = models.ForeignKey(GEIQLabelInfo, on_delete=models.CASCADE, related_name="employees")
+    geiq = models.ForeignKey(ImplementationAssessment, on_delete=models.CASCADE, related_name="employees")
+    label_id = models.IntegerField(verbose_name="id LABEL")
     created_at = models.DateTimeField("date de création", null=True)
     last_name = models.CharField(verbose_name="nom de famille")
     first_name = models.CharField(verbose_name="prénom")
@@ -129,7 +136,7 @@ class Employee(GEIQAddressMixin, models.Model):
 
 class EmployeeContract(models.Model):
 
-    label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
+    label_id = models.IntegerField(verbose_name="id LABEL")
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="contracts")
 
     start_at = models.DateField(verbose_name="date de début")
@@ -152,7 +159,7 @@ class EmployeeContract(models.Model):
 
 class EmployeePrequalification(models.Model):
 
-    label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
+    label_id = models.IntegerField(verbose_name="id LABEL")
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="prequalifications")
 
     action = models.CharField(

@@ -16,8 +16,8 @@ class ReadonlyMixin:
         return False
 
 
-@admin.register(models.GEIQLabelInfo)
-class GEIQLabelInfoAdmin(ReadonlyMixin, ItouModelAdmin):
+@admin.register(models.ImplementationAssessment)
+class ImplementationAssessmentAdmin(ReadonlyMixin, ItouModelAdmin):
     list_display = (
         "pk",
         "name",

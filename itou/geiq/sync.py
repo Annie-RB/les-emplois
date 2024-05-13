@@ -81,12 +81,17 @@ def sync_to_db(api_data, db_queryset, *, model, mapping, data_to_django_obj):
     model.objects.bulk_update(obj_to_update, {db_key for db_key in mapping if db_key != "label_id"})
 
 
-def sync_geiqs():
+def sync_geiqs(year=None):
+    if year is None:
+        year = timezone.localdate().year - 1
     siret_to_company = {
         company.siret: company for company in Company.objects.filter(kind=CompanyKind.GEIQ).exclude(siret="")
     }
     client = geiq_label.get_client()
     geiq_infos = client.get_all_geiq()
+    from collections import defaultdict
+
+    siret_to_label_id = defaultdict(list)
 
     geiq_label_infos = []
     for geiq_info in geiq_infos:
@@ -103,18 +108,36 @@ def sync_geiqs():
         if geiq_info["siret"] not in siret_to_company:
             print(f"Ignoring geiq={geiq_info['nom']} with unknown SIRET={geiq_info['siret']}")
             continue
+        if geiq_info["id"] == 27 and geiq_info["nom"] == "GEIQ ACCUEIL MIDI-PYRENEES":
+            # Duplicate of 45053310400045
+            print(f"Ignoring geiq={geiq_info['nom']} with duplicate SIRET of geiq 107")
+            continue
+        if geiq_info["id"] == 133 and geiq_info["nom"] == "GEIQ METIERS DU TOURISME PAYS DE SAVOIE":
+            # Duplicate of 80784132500010
+            print(f"Ignoring geiq={geiq_info['nom']} with duplicate SIRET of geiq 216")
+            continue
+        if geiq_info["id"] == 190 and geiq_info["nom"] == "JOUBERT":
+            # Duplicate of 44041441500040
+            print(f"Ignoring geiq={geiq_info['nom']} with duplicate SIRET of geiq 151")
+            continue
+        if geiq_info["id"] == 191 and geiq_info["nom"] == "POURRET ":
+            # Duplicate of 75121328100015
+            print(f"Ignoring geiq={geiq_info['nom']} with duplicate SIRET of geiq 112")
+            continue
+        siret_to_label_id[geiq_info["siret"]].append(geiq_info["id"])
         geiq_info["date_creation"] = convert_ms_timestamp_to_datetime(geiq_info["date_creation"])
         geiq_label_infos.append(geiq_info)
 
     def geiq_data_to_django(data, *, mapping, model):
-        geiq = label_data_to_django(data, mapping=mapping, model=model)
-        geiq.company = siret_to_company[geiq.siret]
-        return geiq
+        assessment = label_data_to_django(data, mapping=mapping, model=model)
+        assessment.company = siret_to_company[assessment.siret]
+        assessment.year = year
+        return assessment
 
     sync_to_db(
         geiq_label_infos,
-        models.GEIQLabelInfo.objects.all(),
-        model=models.GEIQLabelInfo,
+        models.ImplementationAssessment.objects.filter(year=year),
+        model=models.ImplementationAssessment,
         mapping=GEIQ_MAPPING,
         data_to_django_obj=geiq_data_to_django,
     )
