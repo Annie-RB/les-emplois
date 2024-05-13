@@ -1,3 +1,5 @@
+import enum
+
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -27,6 +29,10 @@ from itou.www.apply.forms import (
 )
 from itou.www.eligibility_views.forms import AdministrativeCriteriaForm
 from itou.www.geiq_eligibility_views.forms import GEIQAdministrativeCriteriaForGEIQForm
+
+
+class ProcessKind(enum.Enum):
+    HIRE = "hire"
 
 
 def _accept(request, siae, job_seeker, error_url, back_url, template_name, extra_context, job_application=None):
@@ -65,7 +71,7 @@ def _accept(request, siae, job_seeker, error_url, back_url, template_name, extra
         "job_seeker": job_seeker,
         "siae": siae,
         "back_url": back_url,
-        "hire_process": job_application is None,
+        "ProcessKind": ProcessKind,
     } | extra_context
 
     if request.method == "POST" and all([form.is_valid() for form in forms]):
@@ -194,6 +200,7 @@ def _eligibility(request, siae, job_seeker, cancel_url, next_url, template_name,
         "job_seeker": job_seeker,
         "cancel_url": cancel_url,
         "matomo_custom_title": "Evaluation de la candidature",
+        "ProcessKind": ProcessKind,
     } | extra_context
     return render(request, template_name, context)
 
@@ -234,6 +241,7 @@ def _geiq_eligibility(
         "back_url": back_url,
         "next_url": next_url,
         "geiq_criteria_form_url": geiq_criteria_form_url,
+        "ProcessKind": ProcessKind,
     } | extra_context
 
     return render(request, template_name, context)

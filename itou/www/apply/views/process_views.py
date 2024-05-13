@@ -427,7 +427,7 @@ def accept(request, job_application_id, template_name="apply/process_accept.html
         error_url=next_url,
         back_url=next_url,
         template_name=template_name,
-        extra_context={},
+        extra_context={"process": None},
         job_application=job_application,
     )
 

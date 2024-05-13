@@ -39,6 +39,7 @@ from itou.www.apply.forms import (
     SubmitJobApplicationForm,
 )
 from itou.www.apply.views import common as common_views, constants as apply_view_constants
+from itou.www.apply.views.common import ProcessKind
 from itou.www.eligibility_views.forms import AdministrativeCriteriaForm
 from itou.www.geiq_eligibility_views.forms import GEIQAdministrativeCriteriaForm
 
@@ -78,17 +79,17 @@ class ApplyStepBaseView(LoginRequiredMixin, TemplateView):
         super().__init__()
         self.company = None
         self.apply_session = None
-        self.hire_process = None
+        self.process = None
 
     def setup(self, request, *args, **kwargs):
         self.company = get_object_or_404(Company.objects.with_has_active_members(), pk=kwargs["company_pk"])
         self.apply_session = SessionNamespace(request.session, f"job_application-{self.company.pk}")
-        self.hire_process = kwargs.pop("hire_process", False)
+        self.process = kwargs.pop("process", None)
         super().setup(request, *args, **kwargs)
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            if self.hire_process and request.user.kind != UserKind.EMPLOYER:
+            if self.process is ProcessKind.HIRE and request.user.kind != UserKind.EMPLOYER:
                 raise PermissionDenied("Seuls les employeurs sont autorisés à déclarer des embauches")
             elif request.user.kind not in [
                 UserKind.JOB_SEEKER,
@@ -112,7 +113,8 @@ class ApplyStepBaseView(LoginRequiredMixin, TemplateView):
         return super().get_context_data(**kwargs) | {
             "siae": self.company,
             "back_url": self.get_back_url(),
-            "hire_process": self.hire_process,
+            "process": self.process,
+            "ProcessKind": ProcessKind,
             "reset_url": reverse("dashboard:index"),
         }
 
@@ -178,7 +180,11 @@ class ApplyStepForSenderBaseView(ApplyStepBaseView):
         return super().dispatch(request, *args, **kwargs)
 
     def redirect_to_check_infos(self, job_seeker_pk):
-        view_name = "apply:check_job_seeker_info_for_hire" if self.hire_process else "apply:step_check_job_seeker_info"
+        view_name = (
+            "apply:check_job_seeker_info_for_hire"
+            if self.process is ProcessKind.HIRE
+            else "apply:step_check_job_seeker_info"
+        )
         return HttpResponseRedirect(
             reverse(view_name, kwargs={"company_pk": self.company.pk, "job_seeker_pk": job_seeker_pk})
         )
@@ -293,7 +299,11 @@ class CheckNIRForSenderView(ApplyStepForSenderBaseView):
         self.form = CheckJobSeekerNirForm(job_seeker=None, data=request.POST or None)
 
     def redirect_to_check_email(self, session_uuid):
-        view_name = "apply:search_by_email_for_hire" if self.hire_process else "apply:search_by_email_for_sender"
+        view_name = (
+            "apply:search_by_email_for_hire"
+            if self.process is ProcessKind.HIRE
+            else "apply:search_by_email_for_sender"
+        )
         return HttpResponseRedirect(
             reverse(view_name, kwargs={"company_pk": self.company.pk, "session_uuid": session_uuid})
         )
@@ -368,7 +378,7 @@ class SearchByEmailForSenderView(SessionNamespaceRequiredMixin, ApplyStepForSend
                 self.job_seeker_session.update({"user": user_infos, "profile": profile_infos})
                 view_name = (
                     "apply:create_job_seeker_step_1_for_hire"
-                    if self.hire_process
+                    if self.process is ProcessKind.HIRE
                     else "apply:create_job_seeker_step_1_for_sender"
                 )
 
@@ -415,7 +425,7 @@ class SearchByEmailForSenderView(SessionNamespaceRequiredMixin, ApplyStepForSend
         )
 
     def get_back_url(self):
-        view_name = "apply:check_nir_for_hire" if self.hire_process else "apply:check_nir_for_sender"
+        view_name = "apply:check_nir_for_hire" if self.process is ProcessKind.HIRE else "apply:check_nir_for_sender"
         return reverse(view_name, kwargs={"company_pk": self.company.pk})
 
     def get_context_data(self, **kwargs):
@@ -439,14 +449,14 @@ class CreateJobSeekerForSenderBaseView(SessionNamespaceRequiredMixin, ApplyStepF
         super().setup(request, *args, **kwargs)
 
     def get_back_url(self):
-        view_name = self.previous_hire_url if self.hire_process else self.previous_apply_url
+        view_name = self.previous_hire_url if self.process is ProcessKind.HIRE else self.previous_apply_url
         return reverse(
             view_name,
             kwargs={"company_pk": self.company.pk, "session_uuid": self.job_seeker_session.name},
         )
 
     def get_next_url(self):
-        view_name = self.next_hire_url if self.hire_process else self.next_apply_url
+        view_name = self.next_hire_url if self.process is ProcessKind.HIRE else self.next_apply_url
         return reverse(
             view_name,
             kwargs={"company_pk": self.company.pk, "session_uuid": self.job_seeker_session.name},
@@ -629,7 +639,7 @@ class CreateJobSeekerStepEndForSenderView(CreateJobSeekerForSenderBaseView):
         )
 
     def get_next_url(self):
-        if self.hire_process:
+        if self.process is ProcessKind.HIRE:
             if self.company.kind == CompanyKind.GEIQ:
                 view_name = "apply:geiq_eligibility_for_hire"
             else:
@@ -733,7 +743,7 @@ class CheckJobSeekerInformationsForHire(ApplicationBaseView):
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        assert self.hire_process
+        assert self.process is ProcessKind.HIRE
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(**kwargs) | {
@@ -763,7 +773,7 @@ class CheckPreviousApplications(ApplicationBaseView):
             self.previous_applications = self.get_previous_applications_queryset()
 
     def get_next_url(self):
-        if self.hire_process:
+        if self.process is ProcessKind.HIRE:
             view_name = (
                 "apply:geiq_eligibility_for_hire"
                 if self.company.kind == CompanyKind.GEIQ
@@ -1216,7 +1226,11 @@ class UpdateJobSeekerBaseView(SessionNamespaceRequiredMixin, ApplyStepBaseView):
             "update_job_seeker": True,
             "job_seeker": self.job_seeker,
             "step_3_url": reverse(
-                "apply:update_job_seeker_step_3_for_hire" if self.hire_process else "apply:update_job_seeker_step_3",
+                (
+                    "apply:update_job_seeker_step_3_for_hire"
+                    if self.process is ProcessKind.HIRE
+                    else "apply:update_job_seeker_step_3"
+                ),
                 kwargs={"company_pk": self.company.pk, "job_seeker_pk": self.job_seeker.pk},
             ),
             "reset_url": reverse(
@@ -1230,14 +1244,14 @@ class UpdateJobSeekerBaseView(SessionNamespaceRequiredMixin, ApplyStepBaseView):
             field.field.disabled = True
 
     def get_back_url(self):
-        view_name = self.previous_hire_url if self.hire_process else self.previous_apply_url
+        view_name = self.previous_hire_url if self.process is ProcessKind.HIRE else self.previous_apply_url
         return reverse(
             view_name,
             kwargs={"company_pk": self.company.pk, "job_seeker_pk": self.job_seeker.pk},
         )
 
     def get_next_url(self):
-        view_name = self.next_hire_url if self.hire_process else self.next_apply_url
+        view_name = self.next_hire_url if self.process is ProcessKind.HIRE else self.next_apply_url
         return reverse(
             view_name,
             kwargs={"company_pk": self.company.pk, "job_seeker_pk": self.job_seeker.pk},
@@ -1513,7 +1527,7 @@ def eligibility_for_hire(request, company_pk, job_seeker_pk, template_name="appl
         ),
         next_url=next_url,
         template_name=template_name,
-        extra_context={"hire_process": True},
+        extra_context={"process": ProcessKind.HIRE},
     )
 
 
@@ -1542,7 +1556,7 @@ def geiq_eligibility_for_hire(
         ),
         template_name=template_name,
         extra_context={
-            "hire_process": True,
+            "process": ProcessKind.HIRE,
             "is_subject_to_eligibility_rules": False,
         },
     )
@@ -1595,5 +1609,6 @@ def hire_confirmation(request, company_pk, job_seeker_pk, template_name="apply/s
             "geiq_eligibility_diagnosis": geiq_eligibility_diagnosis,
             "eligibility_diagnosis": eligibility_diagnosis,
             "is_subject_to_geiq_eligibility_rules": company.kind == CompanyKind.GEIQ,
+            "process": ProcessKind.HIRE,
         },
     )

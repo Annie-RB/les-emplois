@@ -1,6 +1,6 @@
 from django.urls import path
 
-from itou.www.apply.views import edit_views, list_views, process_views, submit_views
+from itou.www.apply.views import common, edit_views, list_views, process_views, submit_views
 
 
 # https://docs.djangoproject.com/en/dev/topics/http/urls/#url-namespaces-and-included-urlconfs
@@ -111,73 +111,73 @@ urlpatterns = [
         "<int:company_pk>/hire/check-nir",
         submit_views.CheckNIRForSenderView.as_view(),
         name="check_nir_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/search-by-email/<uuid:session_uuid>",
         submit_views.SearchByEmailForSenderView.as_view(),
         name="search_by_email_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/create-job-seeker/<uuid:session_uuid>/1",
         submit_views.CreateJobSeekerStep1ForSenderView.as_view(),
         name="create_job_seeker_step_1_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/create-job-seeker/<uuid:session_uuid>/2",
         submit_views.CreateJobSeekerStep2ForSenderView.as_view(),
         name="create_job_seeker_step_2_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/create-job-seeker/<uuid:session_uuid>/3",
         submit_views.CreateJobSeekerStep3ForSenderView.as_view(),
         name="create_job_seeker_step_3_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/create-job-seeker/<uuid:session_uuid>/end",
         submit_views.CreateJobSeekerStepEndForSenderView.as_view(),
         name="create_job_seeker_step_end_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/update-job-seeker/<int:job_seeker_pk>/1",
         submit_views.UpdateJobSeekerStep1View.as_view(),
         name="update_job_seeker_step_1_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/update-job-seeker/<int:job_seeker_pk>/2",
         submit_views.UpdateJobSeekerStep2View.as_view(),
         name="update_job_seeker_step_2_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/update-job-seeker/<int:job_seeker_pk>/3",
         submit_views.UpdateJobSeekerStep3View.as_view(),
         name="update_job_seeker_step_3_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/update-job-seeker/<int:job_seeker_pk>/end",
         submit_views.UpdateJobSeekerStepEndView.as_view(),
         name="update_job_seeker_step_end_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/<int:job_seeker_pk>/check-infos",
         submit_views.CheckJobSeekerInformationsForHire.as_view(),
         name="check_job_seeker_info_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/<int:job_seeker_pk>/check-previous-applications",
         submit_views.CheckPreviousApplications.as_view(),
         name="check_prev_applications_for_hire",
-        kwargs={"hire_process": True},
+        kwargs={"process": common.ProcessKind.HIRE},
     ),
     path(
         "<int:company_pk>/hire/<int:job_seeker_pk>/eligibility",

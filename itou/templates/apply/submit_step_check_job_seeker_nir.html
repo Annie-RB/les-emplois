@@ -17,7 +17,7 @@
                     <strong>Nouveauté</strong>
                 </p>
                 <p class="mb-0">
-                    {% if hire_process %}
+                    {% if process is ProcessKind.HIRE %}
                         Cet espace vous permet maintenant de déclarer directement une embauche sans avoir à créer une candidature au préalable.
                         {% if siae.kind == CompanyKind.GEIQ %}
                             Si vous souhaitez créer une candidature à traiter plus tard (avec la possibilité d’enregistrer une action préalable au recrutement), veuillez vous rendre
