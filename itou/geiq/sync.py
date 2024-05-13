@@ -55,21 +55,6 @@ GEIQ_MAPPING = {
 }
 
 
-ANTENNA_MAPPING = {
-    "label_id": "id",
-    "geiq_id": "geiq_id",
-    "name": "nom",
-    "created_at": "date_creation",
-    "siret": "siret",
-    "address_line_1": "adresse",
-    "address_line_2": "adresse2",
-    "post_code": "cp",
-    "city": "ville",
-    "phone": "telephone",
-    "email": "email",
-}
-
-
 def sync_to_db(api_data, db_queryset, *, model, mapping, with_other_data):
     obj_to_create = []
     obj_to_update = []
@@ -99,14 +84,13 @@ def sync_to_db(api_data, db_queryset, *, model, mapping, with_other_data):
     model.objects.bulk_update(obj_to_update, {db_key for db_key in mapping if db_key != "label_id"})
 
 
-def sync_geiqs_and_antennas():
+def sync_geiqs():
     siret_to_company = {
         company.siret: company for company in Company.objects.filter(kind=CompanyKind.GEIQ).exclude(siret="")
     }
     client = geiq_label.get_client()
     geiq_infos = client.get_all_geiq()
 
-    antenna_label_infos = []
     geiq_label_infos = []
     for geiq_info in geiq_infos:
         for key in (
@@ -123,19 +107,7 @@ def sync_geiqs_and_antennas():
             print(f"Ignoring geiq={geiq_info['nom']} with unknown SIRET={geiq_info['siret']}")
             continue
         geiq_info["date_creation"] = convert_ms_timestamp_to_datetime(geiq_info["date_creation"])
-        antenne_infos = geiq_info.pop("antennes")
-        for antenne_info in antenne_infos:
-            assert antenne_info["geiq_id"] == geiq_info["id"], antenne_info
-            for key in (
-                "siret",
-                "telephone",
-                "email",
-                "adresse2",
-            ):
-                antenne_info[key] = normalize_null_values(antenne_info[key])
-            antenne_info["date_creation"] = convert_ms_timestamp_to_datetime(antenne_info["date_creation"])
         geiq_label_infos.append(geiq_info)
-        antenna_label_infos.extend(antenne_infos)
 
     geiqs_to_create = []
     geiqs_to_update = []
@@ -169,14 +141,6 @@ def sync_geiqs_and_antennas():
     models.GEIQLabelInfo.objects.bulk_create(geiqs_to_create)
     models.GEIQLabelInfo.objects.bulk_update(
         geiqs_to_update, {db_key for db_key in GEIQ_MAPPING if db_key != "label_id"}
-    )
-
-    sync_to_db(
-        antenna_label_infos,
-        models.GEIQAntenna.objects.all(),
-        model=models.GEIQAntenna,
-        mapping=ANTENNA_MAPPING,
-        with_other_data=False,
     )
 
 

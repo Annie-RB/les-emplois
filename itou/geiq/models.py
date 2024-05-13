@@ -77,17 +77,6 @@ class GEIQLabelInfo(GEIQAddressMixin, models.Model):
     other_data = models.JSONField(verbose_name="autres données")
 
 
-class GEIQAntenna(GEIQAddressMixin, models.Model):
-
-    label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
-    geiq = models.ForeignKey(GEIQLabelInfo, on_delete=models.CASCADE, related_name="antennas")
-    name = models.CharField(verbose_name="nom")
-    created_at = models.DateTimeField("date de création", null=True)
-    siret = models.CharField(verbose_name="siret", blank=True)
-    phone = models.CharField(verbose_name="téléphone", max_length=20, blank=True)
-    email = models.EmailField(verbose_name="e-mail", blank=True)
-
-
 class Employee(GEIQAddressMixin, models.Model):
 
     label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
@@ -142,7 +131,6 @@ class EmployeeContract(models.Model):
 
     label_id = models.IntegerField(verbose_name="id LABEL", primary_key=True)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="contracts")
-    antenna = models.ForeignKey(GEIQAntenna, on_delete=models.CASCADE, null=True, related_name="contracts")
 
     start_at = models.DateField(verbose_name="date de début")
     planned_end_at = models.DateField(verbose_name="date de fin prévisionnelle")

@@ -24,15 +24,6 @@ class GEIQLabelInfoAdmin(ReadonlyMixin, ItouModelAdmin):
     )
 
 
-@admin.register(models.GEIQAntenna)
-class GEIQAntennaAdmin(ReadonlyMixin, ItouModelAdmin):
-    list_display = (
-        "pk",
-        "geiq",
-        "name",
-    )
-
-
 @admin.register(models.Employee)
 class EmployeeAdmin(ReadonlyMixin, ItouModelAdmin):
     list_display = (
