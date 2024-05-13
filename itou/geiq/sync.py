@@ -27,16 +27,13 @@ def normalize_null_values(value):
     return value
 
 
-def label_data_to_django(data, *, mapping, model, with_other_data=False):
+def label_data_to_django(data, *, mapping, model):
     model_data = {}
-    if with_other_data:
-        other_data = dict(data)
+    other_data = dict(data)
     for db_key, label_key in mapping.items():
         model_data[db_key] = data[label_key]
-        if with_other_data:
-            other_data.pop(label_key)
-    if with_other_data:
-        model_data["other_data"] = other_data
+        other_data.pop(label_key)
+    model_data["other_data"] = other_data
     return model(**model_data)
 
 
@@ -55,7 +52,7 @@ GEIQ_MAPPING = {
 }
 
 
-def sync_to_db(api_data, db_queryset, *, model, mapping, with_other_data):
+def sync_to_db(api_data, db_queryset, *, model, mapping, data_to_django_obj):
     obj_to_create = []
     obj_to_update = []
     obj_to_delete = []
@@ -68,7 +65,7 @@ def sync_to_db(api_data, db_queryset, *, model, mapping, with_other_data):
         [(col_key, db_key) for db_key, col_key in mapping.items()],
     ):
         if item.kind in [DiffItemKind.ADDITION, DiffItemKind.EDITION]:
-            obj = label_data_to_django(item.raw, mapping=mapping, model=model, with_other_data=with_other_data)
+            obj = data_to_django_obj(item.raw, mapping=mapping, model=model)
             if item.kind == DiffItemKind.ADDITION:
                 obj_to_create.append(obj)
             else:
@@ -109,38 +106,17 @@ def sync_geiqs():
         geiq_info["date_creation"] = convert_ms_timestamp_to_datetime(geiq_info["date_creation"])
         geiq_label_infos.append(geiq_info)
 
-    geiqs_to_create = []
-    geiqs_to_update = []
-    geiqs_to_delete = []
+    def geiq_data_to_django(data, *, mapping, model):
+        geiq = label_data_to_django(data, mapping=mapping, model=model)
+        geiq.company = siret_to_company[geiq.siret]
+        return geiq
 
-    for item in yield_sync_diff(
+    sync_to_db(
         geiq_label_infos,
-        "id",
         models.GEIQLabelInfo.objects.all(),
-        "label_id",
-        [(col_key, db_key) for db_key, col_key in GEIQ_MAPPING.items()],
-    ):
-        if item.kind in [DiffItemKind.ADDITION, DiffItemKind.EDITION]:
-            geiq = label_data_to_django(
-                item.raw, mapping=GEIQ_MAPPING, model=models.GEIQLabelInfo, with_other_data=True
-            )
-            if item.kind == DiffItemKind.ADDITION:
-                # This line prevents the use of sync_to_db utility
-                geiq.company = siret_to_company[geiq.siret]
-                geiqs_to_create.append(geiq)
-            else:
-                geiq.pk = item.db_obj.pk
-                geiqs_to_update.append(geiq)
-                print(item)
-        elif item.kind == DiffItemKind.DELETION:
-            geiqs_to_delete.add(item.key)
-
-    print(f"Will create {len(geiqs_to_create)} GEIQ")
-    print(f"Will update {len(geiqs_to_update)} GEIQ")
-    print(f"Would delete {len(geiqs_to_delete)} GEIQ")
-    models.GEIQLabelInfo.objects.bulk_create(geiqs_to_create)
-    models.GEIQLabelInfo.objects.bulk_update(
-        geiqs_to_update, {db_key for db_key in GEIQ_MAPPING if db_key != "label_id"}
+        model=models.GEIQLabelInfo,
+        mapping=GEIQ_MAPPING,
+        data_to_django_obj=geiq_data_to_django,
     )
 
 
@@ -317,7 +293,7 @@ def sync_employee_and_contracts(geiq_id):
         models.Employee.objects.filter(geiq__label_id=geiq_id).all(),
         model=models.Employee,
         mapping=EMPLOYEE_MAPPING,
-        with_other_data=True,
+        data_to_django_obj=label_data_to_django,
     )
 
     sync_to_db(
@@ -325,7 +301,7 @@ def sync_employee_and_contracts(geiq_id):
         models.EmployeeContract.objects.filter(employee__geiq__label_id=geiq_id).all(),
         model=models.EmployeeContract,
         mapping=CONTRACT_MAPPING,
-        with_other_data=True,
+        data_to_django_obj=label_data_to_django,
     )
 
     sync_to_db(
@@ -333,7 +309,7 @@ def sync_employee_and_contracts(geiq_id):
         models.EmployeePrequalification.objects.filter(employee__geiq__label_id=geiq_id).all(),
         model=models.EmployeePrequalification,
         mapping=PREQUALIFICATION_MAPPING,
-        with_other_data=True,
+        data_to_django_obj=label_data_to_django,
     )
 
     models.GEIQLabelInfo.objects.filter(label_id=geiq_id).update(last_synced_at=timezone.now())
