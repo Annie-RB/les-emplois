@@ -30,6 +30,12 @@ class GpsUserSearchForm(forms.Form):
 
     is_referent = forms.BooleanField(label="Se rattacher comme référent", required=False)
 
+    def __init__(self, company, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["user"].widget.attrs["data-no-results-url"] = reverse_lazy(
+            "apply:start", kwargs={"company_pk": company.pk}
+        )
+
     def clean(self):
         super().clean()
 

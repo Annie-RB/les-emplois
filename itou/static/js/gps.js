@@ -8,17 +8,12 @@ htmx.onLoad((target) => {
     const frTranslations = Translation.loadPath("./i18n/fr");
     const lang = {
         ...frTranslations.dict,
-        noResults: function () {
-            const select2_i18n = JSON.parse(
-                document.getElementById("js-select2-i18n-vars").textContent
-            );
-            return `
-                <div class="d-inline-flex w-100 mb-2">
-                    <span class="text-muted d-block pe-1">Aucun résultat.</span>
-                    <a href="${select2_i18n.noResultUrl}" class="link">Enregistrer un nouveau bénéficiaire</a>
-                </div>
-            `
-        },
+        noResults: () => `
+            <div class="d-inline-flex w-100 mb-2">
+                <span class="text-muted d-block pe-1">Aucun résultat.</span>
+                <a href="${searchUserInputField.data('noResultsUrl')}" class="link">Enregistrer un nouveau bénéficiaire</a>
+            </div>
+        `,
     };
     searchUserInputField.select2({
         placeholder: 'Jean DUPONT',

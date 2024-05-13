@@ -29,10 +29,5 @@
 
 {% block script %}
     {{ block.super }}
-    <script id="js-select2-i18n-vars" type="application/json">
-        {
-            "noResultUrl": "{% url 'apply:start' company_pk=request.current_organization.pk %}"
-        }
-    </script>
     <script src='{% static "js/gps.js"%}'></script>
 {% endblock %}
