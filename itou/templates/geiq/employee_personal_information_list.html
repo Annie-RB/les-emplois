@@ -22,7 +22,7 @@
                     {% for employee in data_page %}
                         <tr>
                             <td>{{ employee.get_full_name }}</td>
-                            <td>{{ employee.birthdate }}</td>
+                            <td>{{ employee.birthdate|date:"d/m/Y" }}</td>
                             <td>
                                 {% if employee.title == "MME" %}
                                     F
@@ -30,7 +30,7 @@
                                     H
                                 {% endif %}
                             </td>
-                            <td>{{ employee.qualification }} / {{ employee.qualification.label }}</td>
+                            <td>{{ employee.get_qualification_display }}</td>
                             <td>{{ employee.city }}</td>
                         </tr>
                     {% endfor %}

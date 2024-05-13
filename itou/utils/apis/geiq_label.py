@@ -47,6 +47,10 @@ class LabelApiClient:
         assert siret.isdigit(), siret
         return self._command(LabelCommand.GeiqFFGeiq, where=f"geiq.siret,=,{siret}")
 
+    def get_geiq_antenna_by_siret(self, siret):
+        assert siret.isdigit(), siret
+        return self._command(LabelCommand.GeiqFFGeiq, join="geiq.antennes,a", where=f"a.siret,=,{siret}")
+
     def get_all_geiq(self, *, page_size=100):
         data = []
         p = 1
