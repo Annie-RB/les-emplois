@@ -144,9 +144,9 @@ class EmployeeContract(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="contracts")
     antenna = models.ForeignKey(GEIQAntenna, on_delete=models.CASCADE, null=True, related_name="contracts")
 
-    start_at = models.DateTimeField(verbose_name="date de début")
-    planned_end_at = models.DateTimeField(verbose_name="date de fin prévisionnelle")
-    end_at = models.DateTimeField(verbose_name="date de fin", null=True)
+    start_at = models.DateField(verbose_name="date de début")
+    planned_end_at = models.DateField(verbose_name="date de fin prévisionnelle")
+    end_at = models.DateField(verbose_name="date de fin", null=True)
     nb_hours_per_week = models.FloatField(
         verbose_name="nombre d'heures par semaine",
         blank=True,
@@ -173,8 +173,8 @@ class EmployeePrequalification(models.Model):
         default="",
         choices=PrequalificationAction.choices,
     )
-    start_at = models.DateTimeField(verbose_name="date de début")
-    end_at = models.DateTimeField(verbose_name="date de fin")
+    start_at = models.DateField(verbose_name="date de début")
+    end_at = models.DateField(verbose_name="date de fin")
     training_hours_nb = models.PositiveIntegerField("nombre d'heures de formation")
 
     other_data = models.JSONField(verbose_name="autres données")

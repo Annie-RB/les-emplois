@@ -16,6 +16,11 @@ def convert_ms_timestamp_to_datetime(nb_ms):
     return datetime.datetime.fromtimestamp(nb_ms / 1000, tz=datetime.timezone.utc)
 
 
+def convert_iso_datetime_to_date(iso_datetime):
+    # We receive '1970-01-01T00:00:00+0100' or '2022-09-19T00:00:00+0200' values for dates
+    return datetime.date.fromisoformat(iso_datetime[:10])
+
+
 def normalize_null_values(value):
     if value is None:
         return ""
@@ -290,7 +295,7 @@ def _cleanup_employee_info(employee_info):
     ):
         employee_info[key] = normalize_null_values(employee_info[key])
     employee_info["date_creation"] = datetime.datetime.fromisoformat(employee_info["date_creation"])
-    employee_info["date_naissance"] = datetime.date.fromisoformat(employee_info["date_naissance"][:10])
+    employee_info["date_naissance"] = convert_iso_datetime_to_date(employee_info["date_naissance"])
     employee_info["sexe"] = {"H": Title.M, "F": Title.MME}[employee_info["sexe"]]
     employee_info["qualification"] = employee_info["qualification"]["libelle_abr"]
     employee_info["prescripteur"] = employee_info["prescripteur"]["libelle_abr"]
@@ -317,10 +322,10 @@ def sync_employee_and_contracts(geiq_id):
         contract_info["salarie"] = employee_info["id"]
         # If the contract is directly with the GEIQ, the antenne id is 0
         contract_info["antenne"] = contract_info["antenne"]["id"] or None
-        contract_info["date_debut"] = datetime.datetime.fromisoformat(contract_info["date_debut"])
-        contract_info["date_fin"] = datetime.datetime.fromisoformat(contract_info["date_fin"])
+        contract_info["date_debut"] = convert_iso_datetime_to_date(contract_info["date_debut"])
+        contract_info["date_fin"] = convert_iso_datetime_to_date(contract_info["date_fin"])
         contract_info["date_fin_contrat"] = (
-            datetime.datetime.fromisoformat(contract_info["date_fin_contrat"])
+            convert_iso_datetime_to_date(contract_info["date_fin_contrat"])
             if contract_info["date_fin_contrat"]
             else None
         )
@@ -337,8 +342,8 @@ def sync_employee_and_contracts(geiq_id):
         else:
             employee_infos[employee_info["id"]] = employee_info
         prequalification_info["salarie"] = employee_info["id"]
-        prequalification_info["date_debut"] = datetime.datetime.fromisoformat(prequalification_info["date_debut"])
-        prequalification_info["date_fin"] = datetime.datetime.fromisoformat(prequalification_info["date_fin"])
+        prequalification_info["date_debut"] = convert_iso_datetime_to_date(prequalification_info["date_debut"])
+        prequalification_info["date_fin"] = convert_iso_datetime_to_date(prequalification_info["date_fin"])
         prequalification_info["action_pre_qualification"] = prequalification_info["action_pre_qualification"][
             "libelle_abr"
         ]
