@@ -14,7 +14,7 @@
         {% with state=evaluated_job_application.compute_state_for_siae %}
             {% if state == "REFUSED_2" %}
                 <span class="badge badge-sm rounded-pill text-nowrap bg-danger text-white">Problème constaté</span>
-            {% elif evaluated_job_application.evaluated_siae.final_reviewed_at %}
+            {% elif evaluated_job_application.evaluated_siae.final_reviewed_at and not evaluated_job_application.evaluated_siae.submission_freezed_at %}
                 {% if state == "ACCEPTED" or state == "SUBMITTED" %}
                     <span class="badge badge-sm rounded-pill text-nowrap bg-success text-white">Validé</span>
                 {% else %}
